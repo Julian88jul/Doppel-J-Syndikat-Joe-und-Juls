@@ -57,20 +57,37 @@
                 <h2>Wähle deine Akte</h2>
                 <div class="role-cards">
                     <div class="file-card" data-role="Juls">
-                        <span class="file-title">Akte: Juls (Joe)</span>
+                        <span class="file-title">Akte: Juls</span>
                         <div class="stamp-confidential">STRENG GEHEIM</div>
                     </div>
                     <div class="file-card" data-role="Joe">
-                        <span class="file-title">Akte: Joe (Juls)</span>
+                        <span class="file-title">Akte: Joe</span>
                         <div class="stamp-confidential">STRENG GEHEIM</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Main Game Board (Police File) -->
+            <!-- Main Game Board (Table & Police File) -->
             <section id="screen-game" class="screen hidden">
-                <div class="police-file">
-                    <div class="stamp-confidential top-right">STRENG GEHEIM</div>
+
+                <div class="interrogation-table">
+                    <!-- Closed file on the table -->
+                    <div id="closed-file" class="closed-file" title="Akte öffnen">
+                        <span class="closed-file-title">Fallakte</span>
+                        <div class="stamp-confidential small">STRENG GEHEIM</div>
+                    </div>
+
+                    <!-- Scrap of paper (Schnipsel) -->
+                    <div id="scrap-paper" class="scrap-paper hidden" title="Kassiber lesen">
+                        <span class="scrap-text">Kassiber</span>
+                    </div>
+                </div>
+
+                <!-- Open Police File (Modal overlay) -->
+                <div id="open-file-modal" class="file-modal hidden">
+                    <div class="police-file">
+                        <button id="btn-close-file" class="btn-close" title="Akte schließen">X</button>
+                        <div class="stamp-confidential top-right">STRENG GEHEIM</div>
 
                     <h1 class="case-title">Tatvorwurf: <span id="case-name">Laden Diebstahl</span></h1>
 
@@ -91,10 +108,9 @@
                             <button id="btn-submit-2-set" class="btn-typewriter">Kassiber schmuggeln</button>
                         </div>
                         <div id="s2-guesser-view" class="hidden">
-                            <p>Entschlüssele den Code:</p>
+                            <p>Entschlüssele den Code (Hinweise auf dem Tisch!):</p>
                             <div class="hint-display">
                                 <span id="s2-length-hint">_ _ _ _ _</span>
-                                <span id="s2-emoji-hint">🍎🐛</span>
                             </div>
                             <input type="text" id="s2-guess-input" placeholder="Dein Tipp...">
                             <button id="btn-submit-2-guess" class="btn-typewriter">Lösen</button>
@@ -136,6 +152,16 @@
                         <button id="btn-alibi-override" class="btn-alibi hidden">Alibi hält trotzdem! (Als Treffer werten)</button>
                     </div>
 
+                </div>
+                </div>
+
+                <!-- Scrap Modal View -->
+                <div id="scrap-modal" class="scrap-modal hidden">
+                    <div class="scrap-content">
+                        <button id="btn-close-scrap" class="btn-close" title="Kassiber weglegen">X</button>
+                        <h3>Kassiber</h3>
+                        <div id="s2-emoji-hint" class="emoji-huge">🍎🐛</div>
+                    </div>
                 </div>
             </section>
 

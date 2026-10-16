@@ -42,6 +42,15 @@ const statsBoard = document.getElementById('stats-board');
 const streakCountSpan = document.getElementById('streak-count');
 const gangsterRankSpan = document.getElementById('gangster-rank');
 
+// Modals & Table UI
+const closedFile = document.getElementById('closed-file');
+const openFileModal = document.getElementById('open-file-modal');
+const btnCloseFile = document.getElementById('btn-close-file');
+
+const scrapPaper = document.getElementById('scrap-paper');
+const scrapModal = document.getElementById('scrap-modal');
+const btnCloseScrap = document.getElementById('btn-close-scrap');
+
 // Game UI
 const caseName = document.getElementById('case-name');
 const q1Text = document.getElementById('q1-text');
@@ -120,6 +129,28 @@ function showScreen(screenKey) {
     screens[screenKey].classList.remove('hidden');
     screens[screenKey].classList.add('active');
 }
+
+// --- MODAL LOGIC ---
+closedFile.addEventListener('click', () => {
+    playSound(sfxStamp); // Placeholder for open sound
+    openFileModal.classList.remove('hidden');
+});
+
+btnCloseFile.addEventListener('click', () => {
+    playSound(sfxStamp); // Placeholder for close sound
+    openFileModal.classList.add('hidden');
+});
+
+scrapPaper.addEventListener('click', () => {
+    playSound(sfxStamp);
+    scrapModal.classList.remove('hidden');
+});
+
+btnCloseScrap.addEventListener('click', () => {
+    playSound(sfxStamp);
+    scrapModal.classList.add('hidden');
+});
+
 
 // --- LOGIN LOGIC ---
 pinSubmitBtn.addEventListener('click', () => {
@@ -205,7 +236,15 @@ function updateUIBasedOnState(data) {
             // Setter has set the code
             const word = data.stage2.word;
             s2LengthHint.innerText = word.replace(/./g, '_ ').trim();
-            s2EmojiHint.innerText = data.stage2.emoji;
+
+            // Set emoji in the scrap paper modal instead of file directly
+            const scrapHint = document.getElementById('s2-emoji-hint');
+            if(scrapHint) scrapHint.innerText = data.stage2.emoji;
+
+            // Show scrap paper on table for the guesser
+            if (s2SetterView.classList.contains('hidden')) {
+                scrapPaper.classList.remove('hidden');
+            }
 
             if (s2SetterView.classList.contains('hidden') === false) {
                  btnSubmit2Set.disabled = true;

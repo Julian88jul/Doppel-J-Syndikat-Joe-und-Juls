@@ -184,7 +184,7 @@ body {
     position: relative;
     z-index: 10;
     width: 100%;
-    max-width: 600px;
+    max-width: 800px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -306,18 +306,156 @@ body {
     transform: rotate(15deg);
 }
 
-/* THE POLICE FILE (Game Board) */
+/* INTERROGATION TABLE */
+.interrogation-table {
+    width: 100%;
+    height: 60vh;
+    background: #2a221b; /* Dark wood */
+    border-radius: 10px;
+    box-shadow: inset 0 20px 50px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5);
+    position: relative;
+    margin-top: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #1a1510;
+}
+
+.closed-file {
+    background: #d4c4a8;
+    width: 180px;
+    height: 250px;
+    border-radius: 5px 20px 5px 5px;
+    border: 1px solid #a39171;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.8);
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-5deg);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.closed-file:hover {
+    transform: rotate(-2deg) scale(1.05);
+    box-shadow: 8px 8px 20px rgba(0,0,0,0.9);
+}
+
+.closed-file-title {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #222;
+    transform: rotate(-90deg);
+}
+
+.stamp-confidential.small {
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    position: absolute;
+    bottom: 20px;
+    right: 10px;
+}
+
+/* SCRAP PAPER (Kassiber on Table) */
+.scrap-paper {
+    background: #fdfad5; /* yellowish paper */
+    width: 80px;
+    height: 80px;
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    transform: rotate(15deg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e0dfb8;
+    transition: transform 0.2s;
+}
+
+.scrap-paper:hover {
+    transform: rotate(20deg) scale(1.1);
+}
+
+.scrap-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.8rem;
+    color: #444;
+    transform: rotate(-10deg);
+}
+
+/* MODALS (Overlays) */
+.file-modal, .scrap-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.btn-close {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #c00;
+    color: white;
+    font-weight: bold;
+    border: 2px solid white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.btn-close:hover {
+    background: #a00;
+}
+
+/* THE POLICE FILE (Game Board - Now inside modal) */
 .police-file {
     background: #e6d5b8;
     color: #1a1a1a;
     padding: 30px 20px;
     border: 1px solid #bba37f;
     border-radius: 5px 25px 5px 5px;
-    box-shadow: inset 0 0 50px rgba(100, 80, 50, 0.2), 5px 5px 15px rgba(0,0,0,0.7);
-    min-height: 60vh;
+    box-shadow: inset 0 0 50px rgba(100, 80, 50, 0.2), 5px 5px 25px rgba(0,0,0,0.9);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
     position: relative;
-    margin-top: 30px;
     background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.05"/></svg>');
+}
+
+/* SCRAP MODAL CONTENT */
+.scrap-content {
+    background: #fdfad5;
+    padding: 40px;
+    border-radius: 5px;
+    position: relative;
+    box-shadow: 0 0 30px rgba(0,0,0,0.9);
+    text-align: center;
+    border: 1px solid #e0dfb8;
+    max-width: 90vw;
+}
+
+.emoji-huge {
+    font-size: 4rem;
+    margin-top: 20px;
+    letter-spacing: 10px;
 }
 
 .case-title {
