@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doppel-J-Syndikat - Das Verhör</title>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Sounds (Mute Toggle) -->
+    <button id="mute-btn" class="mute-btn" title="Ton umschalten">🔊</button>
+    <button id="hidden-smuggle-btn" class="hidden-btn" title="Neue Akte schmuggeln"></button>
+
+    <div class="room-container">
+
+        <!-- Swinging Lamp -->
+        <div class="lamp-container">
+            <div class="lamp-wire"></div>
+            <div class="lamp-bulb"></div>
+            <div class="light-cone"></div>
+        </div>
+
+        <!-- Detective Silhouettes -->
+        <div class="detectives-bg">
+            <div class="detective grimm">
+                <div class="glowing-eyes"></div>
+            </div>
+            <div class="detective schatten">
+                <div class="glowing-glasses"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard: Streak & Rank -->
+        <div id="stats-board" class="stats-board hidden">
+            <div>Streak: <span id="streak-count">0</span> Tage</div>
+            <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Login / PIN Screen -->
+            <section id="screen-login" class="screen active">
+                <div class="login-box">
+                    <h2>ZUTRITT BESCHRÄNKT</h2>
+                    <p>PIN eingeben:</p>
+                    <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="****">
+                    <button id="pin-submit">Entsperren</button>
+                    <p id="pin-error" class="error hidden">Falsche PIN.</p>
+                </div>
+            </section>
+
+            <!-- Role Selection -->
+            <section id="screen-role-select" class="screen hidden">
+                <h2>Wähle deine Akte</h2>
+                <div class="role-cards">
+                    <div class="file-card" data-role="Juls">
+                        <span class="file-title">Akte: Juls (Joe)</span>
+                        <div class="stamp-confidential">STRENG GEHEIM</div>
+                    </div>
+                    <div class="file-card" data-role="Joe">
+                        <span class="file-title">Akte: Joe (Juls)</span>
+                        <div class="stamp-confidential">STRENG GEHEIM</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Game Board (Police File) -->
+            <section id="screen-game" class="screen hidden">
+                <div class="police-file">
+                    <div class="stamp-confidential top-right">STRENG GEHEIM</div>
+
+                    <h1 class="case-title">Tatvorwurf: <span id="case-name">Laden Diebstahl</span></h1>
+
+                    <div class="stage-container" id="stage-1">
+                        <h3>Stufe 1: Insider-Brücke</h3>
+                        <p class="question-text" id="q1-text">Lade Frage...</p>
+                        <input type="text" id="a1-input" placeholder="Deine Antwort...">
+                        <button id="btn-submit-1" class="btn-typewriter">Eintragen</button>
+                        <div class="status-msg" id="status-1"></div>
+                    </div>
+
+                    <div class="stage-container hidden" id="stage-2">
+                        <h3>Stufe 2: Der Kassiber</h3>
+                        <div id="s2-setter-view" class="hidden">
+                            <p>Du gibst den Code vor:</p>
+                            <input type="text" id="s2-word-input" placeholder="Wort (z.B. Apfel)">
+                            <input type="text" id="s2-emoji-input" maxlength="4" placeholder="1-2 Emojis (z.B. 🍎🐛)">
+                            <button id="btn-submit-2-set" class="btn-typewriter">Kassiber schmuggeln</button>
+                        </div>
+                        <div id="s2-guesser-view" class="hidden">
+                            <p>Entschlüssele den Code:</p>
+                            <div class="hint-display">
+                                <span id="s2-length-hint">_ _ _ _ _</span>
+                                <span id="s2-emoji-hint">🍎🐛</span>
+                            </div>
+                            <input type="text" id="s2-guess-input" placeholder="Dein Tipp...">
+                            <button id="btn-submit-2-guess" class="btn-typewriter">Lösen</button>
+                        </div>
+                        <div class="status-msg" id="status-2"></div>
+                    </div>
+
+                    <div class="stage-container hidden" id="stage-3">
+                        <h3>Stufe 3: Der Widerspruch (Finale)</h3>
+                        <p class="question-text" id="q3-text">Lade finale Frage...</p>
+                        <input type="text" id="a3-input" placeholder="Finale Antwort...">
+                        <button id="btn-submit-3" class="btn-typewriter">Akte schließen</button>
+                        <div class="status-msg" id="status-3"></div>
+                    </div>
+
+                    <div class="stage-container hidden" id="stage-result">
+                        <h3>Verhör-Ergebnis</h3>
+                        <div class="result-comparison">
+                            <div class="result-box">
+                                <h4>Juls</h4>
+                                <p id="res-juls">-</p>
+                            </div>
+                            <div class="result-box">
+                                <h4>Joe</h4>
+                                <p id="res-joe">-</p>
+                            </div>
+                        </div>
+
+                        <div id="red-alert-section" class="hidden">
+                            <h4 class="red-alert-title">ROTER ALARM! DISKREPANZ!</h4>
+                            <p>Die Kommissare werden misstrauisch. Eine letzte Chance: Tippt schnell ein verbindendes Wort ein!</p>
+                            <input type="text" id="rescue-input" placeholder="Verbindendes Wort...">
+                            <button id="btn-rescue" class="btn-typewriter">Rettungsversuch</button>
+                        </div>
+
+                        <div id="final-verdict"></div>
+
+                        <!-- Manual Alibi Override (if failed) -->
+                        <button id="btn-alibi-override" class="btn-alibi hidden">Alibi hält trotzdem! (Als Treffer werten)</button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Smuggle File Screen (Hidden) -->
+            <section id="screen-smuggle" class="screen hidden">
+                <div class="police-file">
+                    <h2>Neue Akte schmuggeln</h2>
+                    <input type="text" id="new-case-title" placeholder="Tatvorwurf">
+                    <input type="text" id="new-q1" placeholder="Frage Stufe 1">
+                    <input type="text" id="new-q3" placeholder="Frage Stufe 3 (Finale)">
+                    <button id="btn-smuggle-save">In Datenbank eintragen</button>
+                    <button id="btn-smuggle-back">Zurück</button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Detective Speech Bubble -->
+    <div id="detective-speech" class="speech-bubble hidden">
+        <p id="detective-speech-text"></p>
+    </div>
+
+    <!-- Firebase v10 SDK Setup -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
