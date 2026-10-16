@@ -23,11 +23,16 @@ function playSound(sound) {
 
 // --- DOM ELEMENTS ---
 const screens = {
+    intro: document.getElementById('screen-intro'),
     login: document.getElementById('screen-login'),
     roleSelect: document.getElementById('screen-role-select'),
     game: document.getElementById('screen-game'),
     smuggle: document.getElementById('screen-smuggle')
 };
+
+// Intro UI
+const typewriterText = document.getElementById('typewriter-text');
+const btnSkipIntro = document.getElementById('btn-skip-intro');
 
 // Login
 const pinInput = document.getElementById('pin-input');
@@ -164,15 +169,60 @@ pinSubmitBtn.addEventListener('click', () => {
 
 // --- ROLE SELECTION LOGIC ---
 roleCards.forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async () => {
         currentUserRole = card.getAttribute('data-role');
-        statsBoard.classList.remove('hidden');
-        showScreen('game');
-        loadDailyCase();
-        listenToGameState();
-        loadStats();
+        statsBoard.classList.add('hidden'); // Hide stats during intro
+
+        // Pre-load case to get title for intro
+        await loadDailyCase();
+
+        playIntro();
     });
 });
+
+// --- INTRO SEQUENCE LOGIC ---
+let introInterval;
+let isIntroPlaying = false;
+
+function playIntro() {
+    showScreen('intro');
+    isIntroPlaying = true;
+    btnSkipIntro.classList.remove('hidden');
+
+    const title = caseName.innerText;
+    const textToType = `Doppel-J-Syndikat.\nFallakte wird geöffnet...\n\nTatvorwurf:\n${title}\n\nErmittlungen laufen. Kommissar Grimm und Detektiv Schatten haben bereits Platz genommen.\n\nBehalte die Nerven. Mach keinen Fehler.`;
+
+    let i = 0;
+    typewriterText.innerHTML = '';
+
+    introInterval = setInterval(() => {
+        if (!isIntroPlaying) return;
+
+        typewriterText.innerHTML += textToType.charAt(i);
+        // Play sound on non-whitespace
+        if (textToType.charAt(i).trim() !== '') {
+             playSound(sfxTypewriter);
+        }
+
+        i++;
+        if (i >= textToType.length) {
+            clearInterval(introInterval);
+            setTimeout(endIntro, 2000);
+        }
+    }, 50); // Typing speed
+}
+
+function endIntro() {
+    isIntroPlaying = false;
+    clearInterval(introInterval);
+    showScreen('game');
+    statsBoard.classList.remove('hidden');
+    listenToGameState();
+    loadStats();
+}
+
+btnSkipIntro.addEventListener('click', endIntro);
+
 
 // --- GAME LOGIC ---
 

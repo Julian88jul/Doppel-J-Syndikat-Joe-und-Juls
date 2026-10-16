@@ -111,32 +111,34 @@ body {
 /* DETECTIVES (Background Silhouettes) */
 .detectives-bg {
     position: absolute;
-    top: 20%;
+    bottom: 250px; /* Sit right across the table */
     width: 100%;
+    max-width: 600px;
     height: 300px;
     display: flex;
-    justify-content: space-between;
-    padding: 0 10%;
+    justify-content: space-around;
+    padding: 0;
     z-index: 1;
     pointer-events: none;
 }
 
 .detective {
-    width: 120px;
-    height: 200px;
-    background: #000;
-    border-radius: 60px 60px 0 0;
+    width: 160px;
+    height: 250px;
+    background: #050505;
+    border-radius: 80px 80px 0 0;
     position: relative;
-    opacity: 0.8;
-    filter: drop-shadow(0 0 10px rgba(0,0,0,0.9));
+    opacity: 0.95;
+    filter: drop-shadow(0 0 20px rgba(0,0,0,1));
+    box-shadow: inset 0 20px 50px rgba(255, 255, 200, 0.05); /* Slight edge lighting from lamp */
 }
 
 .detective.grimm {
-    transform: scale(0.9);
+    transform: scale(0.95);
 }
 
 .detective.schatten {
-    transform: scale(1.1) translateY(20px);
+    transform: scale(1.1) translateY(10px);
 }
 
 .glowing-eyes, .glowing-glasses {
@@ -184,10 +186,12 @@ body {
     position: relative;
     z-index: 10;
     width: 100%;
+    height: 100%;
     max-width: 800px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 
 .screen {
@@ -206,6 +210,54 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* INTRO SCREEN */
+.intro-box {
+    background: rgba(0,0,0,0.9);
+    padding: 40px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    width: 90vw;
+    max-width: 600px;
+    min-height: 200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.typewriter-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.2rem;
+    color: #e0e0e0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    min-height: 120px;
+}
+
+.typewriter-text::after {
+    content: '|';
+    animation: blinkCursor 1s step-end infinite;
+}
+
+@keyframes blinkCursor {
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.btn-skip {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: transparent;
+    color: #888;
+    border: none;
+    font-family: 'Courier Prime', monospace;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-skip:hover {
+    color: #fff;
 }
 
 /* LOGIN BOX */
@@ -308,17 +360,30 @@ body {
 
 /* INTERROGATION TABLE */
 .interrogation-table {
-    width: 100%;
-    height: 60vh;
-    background: #2a221b; /* Dark wood */
-    border-radius: 10px;
-    box-shadow: inset 0 20px 50px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5);
-    position: relative;
-    margin-top: 50px;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120vw; /* Stretch beyond screen for first person perspective */
+    height: 250px;
+    background: linear-gradient(to bottom, #1f1a17 0%, #0d0a08 100%); /* Dark wood gradient */
+    border-top: 5px solid #100b08;
+    box-shadow: inset 0 30px 100px rgba(0,0,0,0.9), 0 -10px 30px rgba(0,0,0,0.8);
     display: flex;
     justify-content: center;
-    align-items: center;
-    border: 2px solid #1a1510;
+    align-items: flex-end; /* Push items closer to the user */
+    padding-bottom: 20px;
+    z-index: 5;
+    border-radius: 50% 50% 0 0 / 10% 10% 0 0; /* Slight curve to imply depth */
+}
+
+/* Ensure the game screen handles absolute positioning */
+#screen-game {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .closed-file {
@@ -364,8 +429,8 @@ body {
     width: 80px;
     height: 80px;
     position: absolute;
-    bottom: 30px;
-    right: 30px;
+    bottom: 50px;
+    right: 25vw;
     box-shadow: 2px 2px 8px rgba(0,0,0,0.7);
     transform: rotate(15deg);
     cursor: pointer;
