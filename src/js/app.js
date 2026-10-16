@@ -47,6 +47,13 @@ const statsBoard = document.getElementById('stats-board');
 const streakCountSpan = document.getElementById('streak-count');
 const gangsterRankSpan = document.getElementById('gangster-rank');
 
+// Panning & Scene UI
+const sceneContainer = document.getElementById('scene-container');
+const btnLookDown = document.getElementById('btn-look-down');
+const btnLookUp = document.getElementById('btn-look-up');
+const viewDown = document.getElementById('view-down');
+const gum = document.getElementById('gum');
+
 // Modals & Table UI
 const closedFile = document.getElementById('closed-file');
 const openFileModal = document.getElementById('open-file-modal');
@@ -134,6 +141,18 @@ function showScreen(screenKey) {
     screens[screenKey].classList.remove('hidden');
     screens[screenKey].classList.add('active');
 }
+
+// --- PANNING LOGIC ---
+btnLookDown.addEventListener('click', () => {
+    playSound(sfxCreak);
+    viewDown.classList.remove('hidden');
+    sceneContainer.classList.add('pan-down');
+});
+
+btnLookUp.addEventListener('click', () => {
+    playSound(sfxCreak);
+    sceneContainer.classList.remove('pan-down');
+});
 
 // --- MODAL LOGIC ---
 closedFile.addEventListener('click', () => {
@@ -226,17 +245,51 @@ btnSkipIntro.addEventListener('click', endIntro);
 
 // --- GAME LOGIC ---
 
+const hardcodedCases = [
+    { title: "Bankraub in Berlin", q1: "Welches Auto stand vor der Bank?", q3: "Was war in der großen Tasche?" },
+    { title: "Der Juwelen-Coup", q1: "Wo hast du die Diamanten versteckt?", q3: "Wer war dein Komplize?" },
+    { title: "Kunstfälscher", q1: "Welches Gemälde wurde kopiert?", q3: "Wo ist das Original?" },
+    { title: "Casino-Betrug", q1: "Wie wurden die Karten markiert?", q3: "Wer lenkte den Croupier ab?" },
+    { title: "Museumseinbruch", q1: "Wie wurde die Alarmanlage deaktiviert?", q3: "Durch welches Fenster seid ihr eingestiegen?" },
+    { title: "Tresorknacker", q1: "Welches Werkzeug wurde benutzt?", q3: "Wie lautet die Zahlenkombination?" },
+    { title: "Goldschmuggel", q1: "In welchem Objekt war das Gold versteckt?", q3: "Über welchen Hafen kam die Ware?" },
+    { title: "Hackerangriff", q1: "Welches Passwort wurde verwendet?", q3: "Auf welchem Server liegen die Daten?" },
+    { title: "Autodiebstahl", q1: "Welche Farbe hatte der gestohlene Ferrari?", q3: "Wo wurde der Wagen zerlegt?" },
+    { title: "Entführung des Bürgermeisters", q1: "In welchem Gebäude wurde er festgehalten?", q3: "Wie hoch war die Lösegeldforderung?" },
+    { title: "Geheime Dokumente", q1: "Welcher Deckname wurde verwendet?", q3: "Wo fand die Übergabe statt?" },
+    { title: "Falschgeldring", q1: "Wo steht die Druckerpresse?", q3: "Welches Papier wurde verwendet?" },
+    { title: "Diamantenschmuggel", q1: "In welchem Kleidungsstück waren die Steine?", q3: "Wie hieß der Flug?" },
+    { title: "Kunstraub in Paris", q1: "Welcher Künstler wurde gestohlen?", q3: "Wer hat den Transportwagen gefahren?" },
+    { title: "Giftmischer", q1: "Welches Gift war im Glas?", q3: "Wann wurde das Getränk serviert?" },
+    { title: "Sabotage", q1: "Welches Kabel wurde durchgeschnitten?", q3: "Um wie viel Uhr passierte es?" },
+    { title: "Der unsichtbare Dieb", q1: "Wie wurde die Kamera ausgetrickst?", q3: "Was war das Ablenkungsmanöver?" },
+    { title: "Gefängnisausbruch", q1: "Welcher Wärter wurde bestochen?", q3: "Wo endete der gegrabene Tunnel?" },
+    { title: "Verschwundene Akten", q1: "In welchem Schrank waren die Akten?", q3: "Wer hatte den Nachschlüssel?" },
+    { title: "Schmuckraub am helllichten Tag", q1: "Welche Verkleidung wurde getragen?", q3: "In welche Richtung flüchtete das Motorrad?" },
+    { title: "Erpressung", q1: "Wie wurde der Brief zugestellt?", q3: "Wo soll das Geld deponiert werden?" },
+    { title: "Der falsche Arzt", q1: "Unter welchem Namen trat er auf?", q3: "Welches Medikament wurde gestohlen?" },
+    { title: "Waffenschmuggel", q1: "In welchen Kisten waren die Waffen?", q3: "An welchem Pier legte das Schiff an?" },
+    { title: "Identitätsdiebstahl", q1: "Wessen Kreditkarte wurde benutzt?", q3: "Was wurde als Erstes gekauft?" },
+    { title: "Spionage", q1: "Wo war das Mikrofon versteckt?", q3: "An wen wurden die Bänder verkauft?" },
+    { title: "Geldwäsche", q1: "Welches Restaurant wurde als Fassade genutzt?", q3: "Auf welches Konto ging das Geld?" },
+    { title: "Kunstraub in Venedig", q1: "Welches Boot wurde zur Flucht benutzt?", q3: "Wo fand der Treffpunkt statt?" },
+    { title: "Briefmarkendiebstahl", q1: "Welche seltene Marke fehlt?", q3: "In welchem Auktionshaus sollte sie verkauft werden?" },
+    { title: "Der fliegende Tresor", q1: "Welcher Hubschrauber kam zum Einsatz?", q3: "Wo wurde der Tresor abgeworfen?" },
+    { title: "Der verschwundene Keks", q1: "Wo warst du gestern um 20 Uhr?", q3: "Was ist das Codewort für den Safe?" }
+];
+
 async function loadDailyCase() {
     // Determine which case to load (1-30 based on day of month)
-    const caseIndex = (new Date().getDate() % 30) || 30;
-    const caseRef = ref(db, `cases/case_${caseIndex}`);
+    const caseIndex = ((new Date().getDate() - 1) % 30) || 0;
+    const caseRef = ref(db, `cases/case_${caseIndex + 1}`);
 
     let snapshot = await get(caseRef);
     if (!snapshot.exists()) {
-        // Fallback case if DB is empty
-        caseName.innerText = "Der verschwundene Keks";
-        q1Text.innerText = "Wo warst du gestern um 20 Uhr?";
-        q3Text.innerText = "Was ist das Codewort für den Safe?";
+        // Fallback to hardcoded cases if DB doesn't have this specific case yet
+        const defaultCase = hardcodedCases[caseIndex];
+        caseName.innerText = defaultCase.title;
+        q1Text.innerText = defaultCase.q1;
+        q3Text.innerText = defaultCase.q3;
     } else {
         const data = snapshot.val();
         caseName.innerText = data.title;
@@ -291,9 +344,10 @@ function updateUIBasedOnState(data) {
             const scrapHint = document.getElementById('s2-emoji-hint');
             if(scrapHint) scrapHint.innerText = data.stage2.emoji;
 
-            // Show scrap paper on table for the guesser
+            // Show scrap paper and gum under table for the guesser
             if (s2SetterView.classList.contains('hidden')) {
                 scrapPaper.classList.remove('hidden');
+                gum.classList.remove('hidden');
             }
 
             if (s2SetterView.classList.contains('hidden') === false) {
