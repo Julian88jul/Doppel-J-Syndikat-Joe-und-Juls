@@ -15,20 +15,19 @@
 
     <div class="room-container">
 
-        <!-- Viewport for 3D/Panning effects -->
+        <!-- Viewport for 3D/Panning effects via Mouse Movement -->
         <div id="viewport" class="viewport">
+            <!-- The massive scene that moves around -->
             <div id="scene-container" class="scene-container">
 
-                <!-- UP VIEW (Straight Ahead) -->
-                <div class="view-up">
-                    <!-- Swinging Lamp -->
+                <!-- THE WALL (Straight Ahead) -->
+                <div class="scene-wall">
                     <div class="lamp-container">
                         <div class="lamp-wire"></div>
                         <div class="lamp-bulb"></div>
                         <div class="light-cone"></div>
                     </div>
 
-                    <!-- Detectives (Background Silhouettes) -->
                     <div class="detectives-bg">
                         <div class="detective grimm">
                             <div class="glowing-eyes"></div>
@@ -37,71 +36,20 @@
                             <div class="glowing-glasses"></div>
                         </div>
                     </div>
-
-                    <!-- Dashboard: Streak & Rank -->
-                    <div id="stats-board" class="stats-board hidden">
-                        <div>Streak: <span id="streak-count">0</span> Tage</div>
-                        <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
-                    </div>
-
-                    <!-- Main Content Area -->
-                    <main class="main-content">
-
-                        <!-- Intro Sequence Screen -->
-                        <section id="screen-intro" class="screen hidden">
-                            <div class="intro-box">
-                                <p id="typewriter-text" class="typewriter-text"></p>
-                                <button id="btn-skip-intro" class="btn-skip hidden">Verhör starten >></button>
-                            </div>
-                        </section>
-
-                        <!-- Login / PIN Screen -->
-                        <section id="screen-login" class="screen active">
-                            <div class="login-box">
-                                <h2>ZUTRITT BESCHRÄNKT</h2>
-                                <p>PIN eingeben:</p>
-                                <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="****">
-                                <button id="pin-submit">Entsperren</button>
-                                <p id="pin-error" class="error hidden">Falsche PIN.</p>
-                            </div>
-                        </section>
-
-                        <!-- Role Selection -->
-                        <section id="screen-role-select" class="screen hidden">
-                            <h2>Wähle deine Akte</h2>
-                            <div class="role-cards">
-                                <div class="file-card" data-role="Juls">
-                                    <span class="file-title">Akte: Juls</span>
-                                    <div class="stamp-confidential">STRENG GEHEIM</div>
-                                </div>
-                                <div class="file-card" data-role="Joe">
-                                    <span class="file-title">Akte: Joe</span>
-                                    <div class="stamp-confidential">STRENG GEHEIM</div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Main Game Board (Table Top) -->
-                        <section id="screen-game" class="screen hidden">
-
-                            <div class="interrogation-table">
-                                <!-- Closed file on the table -->
-                                <div id="closed-file" class="closed-file" title="Akte öffnen">
-                                    <span class="closed-file-title">Fallakte</span>
-                                    <div class="stamp-confidential small">STRENG GEHEIM</div>
-                                </div>
-                            </div>
-
-                            <button id="btn-look-down" class="btn-look look-down" title="Unter den Tisch schauen">▼</button>
-                        </section>
-                    </main>
                 </div>
 
-                <!-- DOWN VIEW (Under the Table) -->
-                <div class="view-down hidden" id="view-down">
-                    <button id="btn-look-up" class="btn-look look-up" title="Nach oben schauen">▲</button>
+                <!-- THE TABLE TOP -->
+                <div class="scene-table-top">
+                    <!-- Closed file on the table -->
+                    <div id="closed-file" class="closed-file" title="Akte öffnen">
+                        <span class="closed-file-title">Fallakte</span>
+                        <div class="stamp-confidential small">STRENG GEHEIM</div>
+                    </div>
+                </div>
+
+                <!-- UNDER THE TABLE -->
+                <div class="scene-table-under">
                     <div class="table-underside">
-                        <!-- Piece of gum -->
                         <div class="gum hidden" id="gum"></div>
                         <!-- Scrap of paper (Schnipsel) stuck under table -->
                         <div id="scrap-paper" class="scrap-paper hidden" title="Kassiber lesen">
@@ -110,11 +58,62 @@
                     </div>
                 </div>
 
-            </div>
-        </div>
+            </div> <!-- /scene-container -->
+        </div> <!-- /viewport -->
 
-        <!-- Open Police File (Modal overlay - outside of scene so it doesn't move) -->
-        <div id="open-file-modal" class="file-modal hidden">
+        <!-- FIXED UI LAYER (Stays perfectly still while scene moves) -->
+        <div class="ui-layer">
+
+            <!-- Dashboard: Streak & Rank -->
+            <div id="stats-board" class="stats-board hidden">
+                <div>Streak: <span id="streak-count">0</span> Tage</div>
+                <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
+            </div>
+
+            <!-- Main Content Area (Modals, Login, etc) -->
+            <main class="main-content">
+
+                <!-- Intro Sequence Screen -->
+                <section id="screen-intro" class="screen hidden">
+                    <div class="intro-box">
+                        <p id="typewriter-text" class="typewriter-text"></p>
+                        <button id="btn-skip-intro" class="btn-skip hidden">Verhör starten >></button>
+                    </div>
+                </section>
+
+                <!-- Login / PIN Screen -->
+                <section id="screen-login" class="screen active">
+                    <div class="login-box">
+                        <h2>ZUTRITT BESCHRÄNKT</h2>
+                        <p>PIN eingeben:</p>
+                        <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="****">
+                        <button id="pin-submit">Entsperren</button>
+                        <p id="pin-error" class="error hidden">Falsche PIN.</p>
+                    </div>
+                </section>
+
+                <!-- Role Selection -->
+                <section id="screen-role-select" class="screen hidden">
+                    <h2>Wähle deine Akte</h2>
+                    <div class="role-cards">
+                        <div class="file-card" data-role="Juls">
+                            <span class="file-title">Akte: Juls</span>
+                            <div class="stamp-confidential">STRENG GEHEIM</div>
+                        </div>
+                        <div class="file-card" data-role="Joe">
+                            <span class="file-title">Akte: Joe</span>
+                            <div class="stamp-confidential">STRENG GEHEIM</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hidden Game Anchor (used by JS to know game is active) -->
+                <section id="screen-game" class="screen hidden"></section>
+
+            </main>
+
+            <!-- Open Police File (Modal overlay) -->
+            <div id="open-file-modal" class="file-modal hidden">
                     <div class="police-file">
                         <button id="btn-close-file" class="btn-close" title="Akte schließen">X</button>
                         <div class="stamp-confidential top-right">STRENG GEHEIM</div>
@@ -193,18 +192,20 @@
         </div>
 
         <!-- Smuggle File Screen (Hidden) -->
-        <div id="screen-smuggle" class="file-modal hidden">
-            <div class="police-file">
-                    <h2>Neue Akte schmuggeln</h2>
-                    <input type="text" id="new-case-title" placeholder="Tatvorwurf">
-                    <input type="text" id="new-q1" placeholder="Frage Stufe 1">
-                    <input type="text" id="new-q3" placeholder="Frage Stufe 3 (Finale)">
-                    <button id="btn-smuggle-save">In Datenbank eintragen</button>
-                    <button id="btn-smuggle-back">Zurück</button>
+            <div id="screen-smuggle" class="file-modal hidden">
+                <div class="police-file">
+                        <h2>Neue Akte schmuggeln</h2>
+                        <input type="text" id="new-case-title" placeholder="Tatvorwurf">
+                        <input type="text" id="new-q1" placeholder="Frage Stufe 1">
+                        <input type="text" id="new-q3" placeholder="Frage Stufe 3 (Finale)">
+                        <button id="btn-smuggle-save">In Datenbank eintragen</button>
+                        <button id="btn-smuggle-back">Zurück</button>
                 </div>
-        </div>
+            </div>
 
-    </div>
+        </div> <!-- /ui-layer -->
+
+    </div> <!-- /room-container -->
 
     <!-- Detective Speech Bubble -->
     <div id="detective-speech" class="speech-bubble hidden">

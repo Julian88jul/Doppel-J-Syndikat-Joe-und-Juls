@@ -67,37 +67,58 @@ body {
 }
 
 .scene-container {
-    width: 100%;
-    height: 200vh; /* Twice the height to allow panning down */
+    width: 120vw;
+    height: 150vh; /* Taller to allow looking down */
     position: absolute;
-    top: 0;
-    left: 0;
-    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth pan */
+    /* Center it initially */
+    top: -25vh;
+    left: -10vw;
+    /* Quick transform based on JS mousemove */
+    transition: transform 0.1s ease-out;
 }
 
-.scene-container.pan-down {
-    transform: translateY(-100vh);
-}
-
-.view-up {
+.scene-wall {
     width: 100%;
-    height: 100vh;
+    height: 90vh; /* Takes up most of the initial view */
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
-.view-down {
+.scene-table-top {
     width: 100%;
-    height: 100vh;
+    height: 30vh;
+    position: relative;
+}
+
+.scene-table-under {
+    width: 100%;
+    height: 30vh;
     position: relative;
     background: #020202;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     box-shadow: inset 0 50px 50px -20px rgba(0,0,0,1);
+    padding-top: 20px;
+}
+
+/* UI LAYER */
+.ui-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    pointer-events: none; /* Let clicks pass through to scene unless hitting a UI element */
+}
+
+/* Re-enable pointer events for interactive UI parts */
+.ui-layer > * {
+    pointer-events: auto;
 }
 
 /* LAMP ANIMATION */
@@ -147,7 +168,7 @@ body {
 /* DETECTIVES (Background Silhouettes) */
 .detectives-bg {
     position: absolute;
-    bottom: 250px; /* Sit right across the table */
+    bottom: 0px; /* Sit right across the table (relative to wall) */
     width: 100%;
     max-width: 600px;
     height: 300px;
@@ -394,32 +415,21 @@ body {
     transform: rotate(15deg);
 }
 
-/* INTERROGATION TABLE */
-.interrogation-table {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120vw; /* Stretch beyond screen for first person perspective */
-    height: 250px;
+/* INTERROGATION TABLE (Now merged into scene) */
+.scene-table-top {
     background: linear-gradient(to bottom, #1f1a17 0%, #0d0a08 100%); /* Dark wood gradient */
     border-top: 5px solid #100b08;
     box-shadow: inset 0 30px 100px rgba(0,0,0,0.9), 0 -10px 30px rgba(0,0,0,0.8);
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* Push items closer to the user */
-    padding-bottom: 20px;
+    align-items: center;
     z-index: 5;
     border-radius: 50% 50% 0 0 / 10% 10% 0 0; /* Slight curve to imply depth */
 }
 
-/* Ensure the game screen handles absolute positioning */
+/* Ensure the game screen anchors nicely without blocking */
 #screen-game {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    display: none;
 }
 
 .closed-file {
@@ -459,48 +469,11 @@ body {
     right: 10px;
 }
 
-/* LOOK NAVIGATION BUTTONS */
-.btn-look {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.6);
-    width: 60px;
-    height: 40px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 1.5rem;
-    z-index: 100;
-    transition: all 0.2s;
-    animation: bounce 2s infinite;
-}
-
-.btn-look:hover {
-    background: rgba(255, 255, 255, 0.3);
-    color: #fff;
-    animation: none;
-}
-
-.look-down {
-    bottom: 20px;
-}
-
-.look-up {
-    top: 20px;
-}
-
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
-    40% { transform: translateX(-50%) translateY(-10px); }
-    60% { transform: translateX(-50%) translateY(-5px); }
-}
 
 /* UNDER THE TABLE */
 .table-underside {
     width: 80vw;
-    height: 60vh;
+    height: 100%;
     background: #110d0a; /* Very dark wood */
     border: 2px solid #0a0805;
     position: relative;

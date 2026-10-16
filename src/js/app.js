@@ -49,9 +49,6 @@ const gangsterRankSpan = document.getElementById('gangster-rank');
 
 // Panning & Scene UI
 const sceneContainer = document.getElementById('scene-container');
-const btnLookDown = document.getElementById('btn-look-down');
-const btnLookUp = document.getElementById('btn-look-up');
-const viewDown = document.getElementById('view-down');
 const gum = document.getElementById('gum');
 
 // Modals & Table UI
@@ -143,19 +140,33 @@ function showScreen(screenKey) {
 }
 
 // --- PANNING LOGIC ---
-btnLookDown.addEventListener('click', () => {
-    playSound(sfxCreak);
-    viewDown.classList.remove('hidden');
-    sceneContainer.classList.add('pan-down');
-});
+// Move the scene based on mouse position to create a first-person looking effect
+function handleMouseMove(e) {
+    // Only apply panning if we are in the game screen (intro is done)
+    if (!screens.game.classList.contains('active')) return;
 
-btnLookUp.addEventListener('click', () => {
-    playSound(sfxCreak);
-    sceneContainer.classList.remove('pan-down');
-});
+    // Clamp coordinates to ensure we don't move past the bounds and show black edges
+    // The scene is initialized at left: -10vw and top: -25vh.
+    // Width is 120vw (so we can move between 0 and -20vw).
+    // Height is 150vh (so we can move between +25vh and -25vh relative to its center, or 0 to -50vh total).
+
+    let x = e.clientX / window.innerWidth; // 0 to 1
+    let y = e.clientY / window.innerHeight; // 0 to 1
+
+    // Smooth boundary logic: only pan up to max limits
+    const moveX = Math.max(-20, Math.min(0, x * -20));
+    const moveY = Math.max(-50, Math.min(0, y * -50));
+
+    sceneContainer.style.transform = `translate(${moveX}vw, ${moveY}vh)`;
+}
+
+window.addEventListener('mousemove', handleMouseMove);
 
 // --- MODAL LOGIC ---
 closedFile.addEventListener('click', () => {
+    // Do not allow clicking if the game screen hasn't formally started
+    if (!screens.game.classList.contains('active')) return;
+
     playSound(sfxStamp); // Placeholder for open sound
     openFileModal.classList.remove('hidden');
 });
@@ -279,22 +290,40 @@ const hardcodedCases = [
 ];
 
 async function loadDailyCase() {
-    // Determine which case to load (1-30 based on day of month)
-    const caseIndex = ((new Date().getDate() - 1) % 30) || 0;
-    const caseRef = ref(db, `cases/case_${caseIndex + 1}`);
+    // First, determine how many cases are actually in the DB to support smuggled cases
+    const casesRef = ref(db, 'cases');
+    const casesSnapshot = await get(casesRef);
 
+    let totalCases = 30; // fallback minimum
+    if (casesSnapshot.exists()) {
+        totalCases = Math.max(30, Object.keys(casesSnapshot.val()).length);
+    }
+
+    // Determine which case to load based on day of year to rotate through ALL cases
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = now - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+
+    const caseIndex = (dayOfYear % totalCases);
+
+    // Try to load from DB first
+    const caseRef = ref(db, `cases/case_${caseIndex + 1}`);
     let snapshot = await get(caseRef);
-    if (!snapshot.exists()) {
-        // Fallback to hardcoded cases if DB doesn't have this specific case yet
-        const defaultCase = hardcodedCases[caseIndex];
-        caseName.innerText = defaultCase.title;
-        q1Text.innerText = defaultCase.q1;
-        q3Text.innerText = defaultCase.q3;
-    } else {
+
+    if (snapshot.exists()) {
         const data = snapshot.val();
         caseName.innerText = data.title;
         q1Text.innerText = data.q1;
         q3Text.innerText = data.q3;
+    } else {
+        // Fallback to hardcoded case (wrap index safely within 0-29)
+        const fallbackIndex = caseIndex % 30;
+        const defaultCase = hardcodedCases[fallbackIndex];
+        caseName.innerText = defaultCase.title;
+        q1Text.innerText = defaultCase.q1;
+        q3Text.innerText = defaultCase.q3;
     }
 
     setupStage2Roles();
