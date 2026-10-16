@@ -15,71 +15,9 @@
 
     <div class="room-container">
 
-        <!-- Viewport for 3D/Panning effects via Mouse Movement -->
-        <div id="viewport" class="viewport">
-            <!-- The massive scene that moves around -->
-            <div id="scene-container" class="scene-container">
-
-                <!-- THE WALL (Straight Ahead) -->
-                <div class="scene-wall">
-                    <div class="lamp-container">
-                        <div class="lamp-wire"></div>
-                        <div class="lamp-bulb"></div>
-                        <div class="light-cone"></div>
-                    </div>
-
-                    <div class="detectives-bg">
-                        <div class="detective grimm">
-                            <div class="glowing-eyes"></div>
-                        </div>
-                        <div class="detective schatten">
-                            <div class="glowing-glasses"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- THE TABLE TOP -->
-                <div class="scene-table-top">
-                    <!-- Closed file on the table -->
-                    <div id="closed-file" class="closed-file" title="Akte öffnen">
-                        <span class="closed-file-title">Fallakte</span>
-                        <div class="stamp-confidential small">STRENG GEHEIM</div>
-                    </div>
-                </div>
-
-                <!-- UNDER THE TABLE -->
-                <div class="scene-table-under">
-                    <div class="table-underside">
-                        <div class="gum hidden" id="gum"></div>
-                        <!-- Scrap of paper (Schnipsel) stuck under table -->
-                        <div id="scrap-paper" class="scrap-paper hidden" title="Kassiber lesen">
-                            <span class="scrap-text">Kassiber</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div> <!-- /scene-container -->
-        </div> <!-- /viewport -->
-
-        <!-- FIXED UI LAYER (Stays perfectly still while scene moves) -->
-        <div class="ui-layer">
-
-            <!-- Dashboard: Streak & Rank -->
-            <div id="stats-board" class="stats-board hidden">
-                <div>Streak: <span id="streak-count">0</span> Tage</div>
-                <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
-            </div>
-
-            <!-- Main Content Area (Modals, Login, etc) -->
-            <main class="main-content">
-
-                <!-- Intro Sequence Screen -->
-                <section id="screen-intro" class="screen hidden">
-                    <div class="intro-box">
-                        <p id="typewriter-text" class="typewriter-text"></p>
-                        <button id="btn-skip-intro" class="btn-skip hidden">Verhör starten >></button>
-                    </div>
-                </section>
+        <!-- 1. WAITING ROOM (Static Background for Login/Role Select) -->
+        <div id="waiting-room" class="waiting-room active">
+            <div class="waiting-room-content">
 
                 <!-- Login / PIN Screen -->
                 <section id="screen-login" class="screen active">
@@ -106,111 +44,188 @@
                         </div>
                     </div>
                 </section>
-
-                <!-- Hidden Game Anchor (used by JS to know game is active) -->
-                <section id="screen-game" class="screen hidden"></section>
-
-            </main>
-
-            <!-- Open Police File (Modal overlay) -->
-            <div id="open-file-modal" class="file-modal hidden">
-                    <div class="police-file">
-                        <button id="btn-close-file" class="btn-close" title="Akte schließen">X</button>
-                        <div class="stamp-confidential top-right">STRENG GEHEIM</div>
-
-                    <h1 class="case-title">Tatvorwurf: <span id="case-name">Laden Diebstahl</span></h1>
-
-                    <div class="stage-container" id="stage-1">
-                        <h3>Stufe 1: Insider-Brücke</h3>
-                        <p class="question-text" id="q1-text">Lade Frage...</p>
-                        <input type="text" id="a1-input" placeholder="Deine Antwort...">
-                        <button id="btn-submit-1" class="btn-typewriter">Eintragen</button>
-                        <div class="status-msg" id="status-1"></div>
-                    </div>
-
-                    <div class="stage-container hidden" id="stage-2">
-                        <h3>Stufe 2: Der Kassiber</h3>
-                        <div id="s2-setter-view" class="hidden">
-                            <p>Du gibst den Code vor:</p>
-                            <input type="text" id="s2-word-input" placeholder="Wort (z.B. Apfel)">
-                            <input type="text" id="s2-emoji-input" maxlength="4" placeholder="1-2 Emojis (z.B. 🍎🐛)">
-                            <button id="btn-submit-2-set" class="btn-typewriter">Kassiber schmuggeln</button>
-                        </div>
-                        <div id="s2-guesser-view" class="hidden">
-                            <p>Entschlüssele den Code (Hinweis: Schau unter den Tisch!):</p>
-                            <div class="hint-display">
-                                <span id="s2-length-hint">_ _ _ _ _</span>
-                            </div>
-                            <input type="text" id="s2-guess-input" placeholder="Dein Tipp...">
-                            <button id="btn-submit-2-guess" class="btn-typewriter">Lösen</button>
-                        </div>
-                        <div class="status-msg" id="status-2"></div>
-                    </div>
-
-                    <div class="stage-container hidden" id="stage-3">
-                        <h3>Stufe 3: Der Widerspruch (Finale)</h3>
-                        <p class="question-text" id="q3-text">Lade finale Frage...</p>
-                        <input type="text" id="a3-input" placeholder="Finale Antwort...">
-                        <button id="btn-submit-3" class="btn-typewriter">Akte schließen</button>
-                        <div class="status-msg" id="status-3"></div>
-                    </div>
-
-                    <div class="stage-container hidden" id="stage-result">
-                        <h3>Verhör-Ergebnis</h3>
-                        <div class="result-comparison">
-                            <div class="result-box">
-                                <h4>Juls</h4>
-                                <p id="res-juls">-</p>
-                            </div>
-                            <div class="result-box">
-                                <h4>Joe</h4>
-                                <p id="res-joe">-</p>
-                            </div>
-                        </div>
-
-                        <div id="red-alert-section" class="hidden">
-                            <h4 class="red-alert-title">ROTER ALARM! DISKREPANZ!</h4>
-                            <p>Die Kommissare werden misstrauisch. Eine letzte Chance: Tippt schnell ein verbindendes Wort ein!</p>
-                            <input type="text" id="rescue-input" placeholder="Verbindendes Wort...">
-                            <button id="btn-rescue" class="btn-typewriter">Rettungsversuch</button>
-                        </div>
-
-                        <div id="final-verdict"></div>
-
-                        <!-- Manual Alibi Override (if failed) -->
-                        <button id="btn-alibi-override" class="btn-alibi hidden">Alibi hält trotzdem! (Als Treffer werten)</button>
-                    </div>
-                </div>
-
-        <!-- Scrap Modal View -->
-        <div id="scrap-modal" class="scrap-modal hidden">
-            <div class="scrap-content">
-                <button id="btn-close-scrap" class="btn-close" title="Kassiber weglegen">X</button>
-                <h3>Kassiber</h3>
-                <div id="s2-emoji-hint" class="emoji-huge">🍎🐛</div>
             </div>
         </div>
 
-        <!-- Smuggle File Screen (Hidden) -->
-            <div id="screen-smuggle" class="file-modal hidden">
-                <div class="police-file">
+        <!-- 2. INTERROGATION ROOM (3D Panning Scene) -->
+        <div id="interrogation-room" class="interrogation-room hidden">
+            <!-- Viewport for 3D/Panning effects via Mouse Movement -->
+            <div id="viewport" class="viewport">
+                <!-- The massive scene that moves around -->
+                <div id="scene-container" class="scene-container">
+
+                    <!-- THE WALL (Straight Ahead) -->
+                    <div class="scene-wall">
+                        <!-- Cabinet shape in the dark -->
+                        <div class="cabinet-shadow"></div>
+
+                        <div class="lamp-container">
+                            <div class="lamp-wire"></div>
+                            <div class="lamp-bulb"></div>
+                            <div class="light-cone"></div>
+                        </div>
+
+                        <div class="detectives-bg">
+                            <div class="detective grimm">
+                                <div class="glowing-eyes"></div>
+                                <div class="smoke-particle p1"></div>
+                                <div class="smoke-particle p2"></div>
+                                <div class="smoke-particle p3"></div>
+                            </div>
+                            <div class="detective schatten">
+                                <div class="glowing-glasses"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- THE TABLE TOP -->
+                    <div class="scene-table-top">
+                        <!-- Closed file on the table -->
+                        <div id="closed-file" class="closed-file" title="Akte öffnen">
+                            <div class="stamp-confidential small">STRENG GEHEIM</div>
+                            <!-- Direct display on table -->
+                            <div class="file-cover-text">
+                                <h4 id="cover-case-title">Tatvorwurf</h4>
+                                <p id="cover-case-desc" class="file-desc-text"></p>
+                                <p id="cover-q1" class="file-q1-text"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UNDER THE TABLE -->
+                    <div class="scene-table-under">
+                        <div class="table-underside">
+                            <div class="gum" id="gum"></div>
+                            <!-- Scrap of paper (Schnipsel) stuck under table -->
+                            <div id="scrap-paper" class="scrap-paper hidden" title="Kassiber">
+                                <span class="scrap-text">Kassiber</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- /scene-container -->
+            </div> <!-- /viewport -->
+
+            <!-- FIXED UI LAYER (Stays perfectly still while scene moves) -->
+            <div class="ui-layer">
+
+                <!-- Dashboard: Streak & Rank -->
+                <div id="stats-board" class="stats-board hidden">
+                    <div>Streak: <span id="streak-count">0</span> Tage</div>
+                    <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
+                </div>
+
+                <main class="main-content">
+                    <!-- Hidden Game Anchor -->
+                    <section id="screen-game" class="screen hidden"></section>
+                </main>
+
+                <!-- Open Police File (Modal overlay) -->
+                <div id="open-file-modal" class="file-modal hidden">
+                    <div class="police-file fade-transition">
+                        <button id="btn-close-file" class="btn-close" title="Akte schließen">X</button>
+                        <div class="stamp-confidential top-right">STRENG GEHEIM</div>
+
+                        <h1 class="case-title">Tatvorwurf: <span id="case-name">...</span></h1>
+
+                        <div class="stage-container" id="stage-1">
+                            <h3>Stufe 1: Insider-Brücke</h3>
+                            <p class="question-text" id="q1-text">Lade Frage...</p>
+                            <input type="text" id="a1-input" placeholder="Deine Antwort...">
+                            <button id="btn-submit-1" class="btn-typewriter">Eintragen</button>
+                            <div class="status-msg" id="status-1"></div>
+                        </div>
+
+                        <!-- Stage 2 UI inside the file is now just for solving/guessing -->
+                        <div class="stage-container hidden fade-transition" id="stage-2">
+                            <h3>Stufe 2: Der Kassiber</h3>
+                            <div id="s2-guesser-view" class="hidden">
+                                <p>Entschlüssele den Code (Tipp: Schau unter den Tisch!):</p>
+                                <div class="hint-display">
+                                    <span id="s2-length-hint">_ _ _ _ _</span>
+                                </div>
+                                <input type="text" id="s2-guess-input" placeholder="Dein Tipp...">
+                                <button id="btn-submit-2-guess" class="btn-typewriter">Lösen</button>
+                            </div>
+                            <div class="status-msg" id="status-2"></div>
+                        </div>
+
+                        <div class="stage-container hidden fade-transition" id="stage-3">
+                            <h3>Stufe 3: Der Widerspruch (Finale)</h3>
+                            <p class="question-text" id="q3-text">Lade finale Frage...</p>
+                            <input type="text" id="a3-input" placeholder="Finale Antwort...">
+                            <button id="btn-submit-3" class="btn-typewriter">Akte schließen</button>
+                            <div class="status-msg" id="status-3"></div>
+                        </div>
+
+                        <div class="stage-container hidden fade-transition" id="stage-result">
+                            <h3>Verhör-Ergebnis</h3>
+                            <div class="result-comparison">
+                                <div class="result-box">
+                                    <h4>Juls</h4>
+                                    <p id="res-juls">-</p>
+                                </div>
+                                <div class="result-box">
+                                    <h4>Joe</h4>
+                                    <p id="res-joe">-</p>
+                                </div>
+                            </div>
+
+                            <div id="red-alert-section" class="hidden fade-transition">
+                                <h4 class="red-alert-title">ROTER ALARM! DISKREPANZ!</h4>
+                                <p>Die Kommissare werden misstrauisch. Eine letzte Chance: Tippt schnell ein verbindendes Wort ein!</p>
+                                <input type="text" id="rescue-input" placeholder="Verbindendes Wort...">
+                                <button id="btn-rescue" class="btn-typewriter">Rettungsversuch</button>
+                            </div>
+
+                            <div id="final-verdict"></div>
+
+                            <!-- Manual Alibi Override (if failed) -->
+                            <button id="btn-alibi-override" class="btn-alibi hidden">Alibi hält trotzdem! (Als Treffer werten)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrap Modal View (Now used for Setter to Write, Guesser to Read) -->
+                <div id="scrap-modal" class="scrap-modal hidden">
+                    <div class="scrap-content">
+                        <button id="btn-close-scrap" class="btn-close" title="Kassiber weglegen">X</button>
+                        <h3>Kassiber</h3>
+
+                        <div id="s2-setter-view" class="hidden">
+                            <p>Schreibe den Code:</p>
+                            <input type="text" id="s2-word-input" placeholder="Wort (z.B. Apfel)">
+                            <input type="text" id="s2-emoji-input" maxlength="4" placeholder="1-2 Emojis (z.B. 🍎🐛)">
+                            <button id="btn-submit-2-set" class="btn-typewriter">Kassiber unters den Tisch kleben</button>
+                        </div>
+
+                        <div id="s2-guesser-hint-view" class="hidden">
+                            <div id="s2-emoji-hint" class="emoji-huge">🍎🐛</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smuggle File Screen (Hidden) -->
+                <div id="screen-smuggle" class="file-modal hidden">
+                    <div class="police-file">
                         <h2>Neue Akte schmuggeln</h2>
                         <input type="text" id="new-case-title" placeholder="Tatvorwurf">
                         <input type="text" id="new-q1" placeholder="Frage Stufe 1">
                         <input type="text" id="new-q3" placeholder="Frage Stufe 3 (Finale)">
                         <button id="btn-smuggle-save">In Datenbank eintragen</button>
                         <button id="btn-smuggle-back">Zurück</button>
+                    </div>
                 </div>
-            </div>
 
-        </div> <!-- /ui-layer -->
+                <!-- NEW: Subtitles Dialog System -->
+                <div id="dialog-system" class="dialog-system">
+                    <p id="dialog-text"></p>
+                </div>
+
+            </div> <!-- /ui-layer -->
+        </div> <!-- /interrogation-room -->
 
     </div> <!-- /room-container -->
-
-    <!-- Detective Speech Bubble -->
-    <div id="detective-speech" class="speech-bubble hidden">
-        <p id="detective-speech-text"></p>
-    </div>
 
     <!-- Firebase v10 SDK Setup -->
     <script type="module" src="js/firebase-config.js"></script>

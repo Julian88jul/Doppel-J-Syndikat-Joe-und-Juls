@@ -22,17 +22,15 @@ function playSound(sound) {
 }
 
 // --- DOM ELEMENTS ---
+const waitingRoom = document.getElementById('waiting-room');
+const interrogationRoom = document.getElementById('interrogation-room');
+
 const screens = {
-    intro: document.getElementById('screen-intro'),
     login: document.getElementById('screen-login'),
     roleSelect: document.getElementById('screen-role-select'),
     game: document.getElementById('screen-game'),
     smuggle: document.getElementById('screen-smuggle')
 };
-
-// Intro UI
-const typewriterText = document.getElementById('typewriter-text');
-const btnSkipIntro = document.getElementById('btn-skip-intro');
 
 // Login
 const pinInput = document.getElementById('pin-input');
@@ -60,6 +58,11 @@ const scrapPaper = document.getElementById('scrap-paper');
 const scrapModal = document.getElementById('scrap-modal');
 const btnCloseScrap = document.getElementById('btn-close-scrap');
 
+// File Cover
+const coverCaseTitle = document.getElementById('cover-case-title');
+const coverCaseDesc = document.getElementById('cover-case-desc');
+const coverQ1 = document.getElementById('cover-q1');
+
 // Game UI
 const caseName = document.getElementById('case-name');
 const q1Text = document.getElementById('q1-text');
@@ -73,6 +76,7 @@ const stage3 = document.getElementById('stage-3');
 const stageResult = document.getElementById('stage-result');
 
 const s2SetterView = document.getElementById('s2-setter-view');
+const s2GuesserHintView = document.getElementById('s2-guesser-hint-view');
 const s2GuesserView = document.getElementById('s2-guesser-view');
 const s2WordInput = document.getElementById('s2-word-input');
 const s2EmojiInput = document.getElementById('s2-emoji-input');
@@ -88,6 +92,9 @@ const a3Input = document.getElementById('a3-input');
 const btnSubmit3 = document.getElementById('btn-submit-3');
 const status3 = document.getElementById('status-3');
 
+const dialogSystem = document.getElementById('dialog-system');
+const dialogText = document.getElementById('dialog-text');
+
 const resJuls = document.getElementById('res-juls');
 const resJoe = document.getElementById('res-joe');
 const redAlertSection = document.getElementById('red-alert-section');
@@ -97,8 +104,6 @@ const finalVerdict = document.getElementById('final-verdict');
 const btnAlibiOverride = document.getElementById('btn-alibi-override');
 
 const detectivesBg = document.querySelector('.detectives-bg');
-const detectiveSpeech = document.getElementById('detective-speech');
-const detectiveSpeechText = document.getElementById('detective-speech-text');
 
 // Smuggle UI
 const hiddenSmuggleBtn = document.getElementById('hidden-smuggle-btn');
@@ -201,92 +206,86 @@ pinSubmitBtn.addEventListener('click', () => {
 roleCards.forEach(card => {
     card.addEventListener('click', async () => {
         currentUserRole = card.getAttribute('data-role');
-        statsBoard.classList.add('hidden'); // Hide stats during intro
+        statsBoard.classList.add('hidden');
 
-        // Pre-load case to get title for intro
         await loadDailyCase();
 
-        playIntro();
+        // Transition from waiting room to interrogation room
+        waitingRoom.classList.add('fade-out');
+        setTimeout(() => {
+            interrogationRoom.classList.remove('hidden');
+            // Trigger reflow
+            void interrogationRoom.offsetWidth;
+            interrogationRoom.classList.add('fade-in');
+
+            showScreen('game'); // set active
+            statsBoard.classList.remove('hidden');
+            listenToGameState();
+            loadStats();
+
+            // Start dialogue
+            speak("Setzt euch. Wir haben einige Fragen an euch...", 4000);
+        }, 1500);
     });
 });
-
-// --- INTRO SEQUENCE LOGIC ---
-let introInterval;
-let isIntroPlaying = false;
-
-function playIntro() {
-    showScreen('intro');
-    isIntroPlaying = true;
-    btnSkipIntro.classList.remove('hidden');
-
-    const title = caseName.innerText;
-    const textToType = `Doppel-J-Syndikat.\nFallakte wird geöffnet...\n\nTatvorwurf:\n${title}\n\nErmittlungen laufen. Kommissar Grimm und Detektiv Schatten haben bereits Platz genommen.\n\nBehalte die Nerven. Mach keinen Fehler.`;
-
-    let i = 0;
-    typewriterText.innerHTML = '';
-
-    introInterval = setInterval(() => {
-        if (!isIntroPlaying) return;
-
-        typewriterText.innerHTML += textToType.charAt(i);
-        // Play sound on non-whitespace
-        if (textToType.charAt(i).trim() !== '') {
-             playSound(sfxTypewriter);
-        }
-
-        i++;
-        if (i >= textToType.length) {
-            clearInterval(introInterval);
-            setTimeout(endIntro, 2000);
-        }
-    }, 50); // Typing speed
-}
-
-function endIntro() {
-    isIntroPlaying = false;
-    clearInterval(introInterval);
-    showScreen('game');
-    statsBoard.classList.remove('hidden');
-    listenToGameState();
-    loadStats();
-}
-
-btnSkipIntro.addEventListener('click', endIntro);
 
 
 // --- GAME LOGIC ---
 
+// --- DIALOG SYSTEM ---
+let currentDialogInterval;
+
+function speak(text, duration = 5000) {
+    clearInterval(currentDialogInterval);
+    dialogText.innerText = '';
+
+    let i = 0;
+    currentDialogInterval = setInterval(() => {
+        dialogText.innerText += text.charAt(i);
+        if (text.charAt(i).trim() !== '') playSound(sfxTypewriter);
+        i++;
+        if (i >= text.length) {
+            clearInterval(currentDialogInterval);
+            setTimeout(() => {
+                dialogText.innerText = '';
+            }, duration);
+        }
+    }, 50);
+}
+
+// --- GAME LOGIC ---
+
 const hardcodedCases = [
-    { title: "Bankraub in Berlin", q1: "Welches Auto stand vor der Bank?", q3: "Was war in der großen Tasche?" },
-    { title: "Der Juwelen-Coup", q1: "Wo hast du die Diamanten versteckt?", q3: "Wer war dein Komplize?" },
-    { title: "Kunstfälscher", q1: "Welches Gemälde wurde kopiert?", q3: "Wo ist das Original?" },
-    { title: "Casino-Betrug", q1: "Wie wurden die Karten markiert?", q3: "Wer lenkte den Croupier ab?" },
-    { title: "Museumseinbruch", q1: "Wie wurde die Alarmanlage deaktiviert?", q3: "Durch welches Fenster seid ihr eingestiegen?" },
-    { title: "Tresorknacker", q1: "Welches Werkzeug wurde benutzt?", q3: "Wie lautet die Zahlenkombination?" },
-    { title: "Goldschmuggel", q1: "In welchem Objekt war das Gold versteckt?", q3: "Über welchen Hafen kam die Ware?" },
-    { title: "Hackerangriff", q1: "Welches Passwort wurde verwendet?", q3: "Auf welchem Server liegen die Daten?" },
-    { title: "Autodiebstahl", q1: "Welche Farbe hatte der gestohlene Ferrari?", q3: "Wo wurde der Wagen zerlegt?" },
-    { title: "Entführung des Bürgermeisters", q1: "In welchem Gebäude wurde er festgehalten?", q3: "Wie hoch war die Lösegeldforderung?" },
-    { title: "Geheime Dokumente", q1: "Welcher Deckname wurde verwendet?", q3: "Wo fand die Übergabe statt?" },
-    { title: "Falschgeldring", q1: "Wo steht die Druckerpresse?", q3: "Welches Papier wurde verwendet?" },
-    { title: "Diamantenschmuggel", q1: "In welchem Kleidungsstück waren die Steine?", q3: "Wie hieß der Flug?" },
-    { title: "Kunstraub in Paris", q1: "Welcher Künstler wurde gestohlen?", q3: "Wer hat den Transportwagen gefahren?" },
-    { title: "Giftmischer", q1: "Welches Gift war im Glas?", q3: "Wann wurde das Getränk serviert?" },
-    { title: "Sabotage", q1: "Welches Kabel wurde durchgeschnitten?", q3: "Um wie viel Uhr passierte es?" },
-    { title: "Der unsichtbare Dieb", q1: "Wie wurde die Kamera ausgetrickst?", q3: "Was war das Ablenkungsmanöver?" },
-    { title: "Gefängnisausbruch", q1: "Welcher Wärter wurde bestochen?", q3: "Wo endete der gegrabene Tunnel?" },
-    { title: "Verschwundene Akten", q1: "In welchem Schrank waren die Akten?", q3: "Wer hatte den Nachschlüssel?" },
-    { title: "Schmuckraub am helllichten Tag", q1: "Welche Verkleidung wurde getragen?", q3: "In welche Richtung flüchtete das Motorrad?" },
-    { title: "Erpressung", q1: "Wie wurde der Brief zugestellt?", q3: "Wo soll das Geld deponiert werden?" },
-    { title: "Der falsche Arzt", q1: "Unter welchem Namen trat er auf?", q3: "Welches Medikament wurde gestohlen?" },
-    { title: "Waffenschmuggel", q1: "In welchen Kisten waren die Waffen?", q3: "An welchem Pier legte das Schiff an?" },
-    { title: "Identitätsdiebstahl", q1: "Wessen Kreditkarte wurde benutzt?", q3: "Was wurde als Erstes gekauft?" },
-    { title: "Spionage", q1: "Wo war das Mikrofon versteckt?", q3: "An wen wurden die Bänder verkauft?" },
-    { title: "Geldwäsche", q1: "Welches Restaurant wurde als Fassade genutzt?", q3: "Auf welches Konto ging das Geld?" },
-    { title: "Kunstraub in Venedig", q1: "Welches Boot wurde zur Flucht benutzt?", q3: "Wo fand der Treffpunkt statt?" },
-    { title: "Briefmarkendiebstahl", q1: "Welche seltene Marke fehlt?", q3: "In welchem Auktionshaus sollte sie verkauft werden?" },
-    { title: "Der fliegende Tresor", q1: "Welcher Hubschrauber kam zum Einsatz?", q3: "Wo wurde der Tresor abgeworfen?" },
-    { title: "Der verschwundene Keks", q1: "Wo warst du gestern um 20 Uhr?", q3: "Was ist das Codewort für den Safe?" }
+    { title: "Bankraub in Berlin", desc: "Zwei bewaffnete Täter räumten gestern den Tresor der Sparkasse leer.", q1: "Welches Auto stand zur Flucht bereit?", q3: "Was war genau in der großen Tasche?" },
+    { title: "Der Juwelen-Coup", desc: "Einbruch beim Nobel-Juwelier. Vitrinen wurden professionell zerschnitten.", q1: "Wo hast du die Diamanten danach versteckt?", q3: "Wer genau war dein Komplize bei der Aktion?" },
+    { title: "Kunstfälscher", desc: "Ein bekannter Van Gogh wurde in der Galerie durch eine Fälschung ersetzt.", q1: "Welches Detail im Gemälde wurde fehlerhaft kopiert?", q3: "Wo befindet sich das echte Original jetzt?" },
+    { title: "Casino-Betrug", desc: "Verdacht auf Kartenzählen und gezinkte Karten am Blackjack-Tisch.", q1: "Mit welchem Mittel wurden die Karten auf der Rückseite markiert?", q3: "Wer hat den Croupier im entscheidenden Moment abgelenkt?" },
+    { title: "Museumseinbruch", desc: "Ein unbezahlbares Artefakt fehlt. Keine Einbruchsspuren an den Türen.", q1: "Mit welchem Trick wurde die Laser-Alarmanlage deaktiviert?", q3: "Durch welches Fenster im Gebäude seid ihr eingestiegen?" },
+    { title: "Tresorknacker", desc: "Ein antiker Tresor der Familie von Hohenfels wurde über Nacht geleert.", q1: "Welches spezielle Werkzeug wurde zum Knacken benutzt?", q3: "Wie lautete die exakte Zahlenkombination des Schlosses?" },
+    { title: "Goldschmuggel", desc: "Mehrere Barren Gold wurden am Zoll vorbeigeschmuggelt.", q1: "In welchem Alltagsgegenstand war das Gold versteckt?", q3: "Über welchen Hafenhafen in Europa kam die heiße Ware?" },
+    { title: "Hackerangriff", desc: "Das Servernetzwerk eines Tech-Riesen wurde lahmgelegt und Daten erbeutet.", q1: "Welches Passwort des Admins konntet ihr herausfinden?", q3: "Auf welchem geheimen Server im Ausland liegen die Daten jetzt?" },
+    { title: "Autodiebstahl", desc: "Ein seltener, roter Sportwagen verschwand spurlos aus der Tiefgarage.", q1: "Welche exakte Farbe und Marke hatte der gestohlene Wagen?", q3: "In welcher Werkstatt wurde das Auto anschließend in Einzelteile zerlegt?" },
+    { title: "Entführung", desc: "Der Bürgermeister wurde auf dem Weg zur Arbeit abgefangen.", q1: "In welchem verlassenen Gebäude wurde er gefangen gehalten?", q3: "Wie hoch war die genaue Lösegeldforderung in Scheinen?" },
+    { title: "Geheime Dokumente", desc: "Top Secret Pläne für einen neuen Motor wurden entwendet.", q1: "Welcher Deckname wurde für diese Operation intern verwendet?", q3: "Wo genau fand die klandestine Übergabe der Papiere statt?" },
+    { title: "Falschgeldring", desc: "Es sind täuschend echte 100-Euro-Blüten im Umlauf aufgetaucht.", q1: "In welchem Kellerabteil steht eure Druckerpresse?", q3: "Welches spezielle Papier aus welchem Land wurde dafür verwendet?" },
+    { title: "Diamantenschmuggel", desc: "Blutdiamanten wurden am Flughafen sichergestellt.", q1: "In welchem spezifischen Kleidungsstück waren die Steine eingenäht?", q3: "Wie lautete die genaue Flugnummer der Maschine?" },
+    { title: "Kunstraub in Paris", desc: "Aus dem Louvre fehlt ein weltbekanntes Porträt.", q1: "Das Werk welches berühmten Künstlers wurde gestohlen?", q3: "Wer genau hat den Fluchtwagen nach dem Raub gesteuert?" },
+    { title: "Giftmischer", desc: "Ein reicher Erbe brach nach einem Abendessen plötzlich zusammen.", q1: "Welches seltene Gift wurde ins Rotweinglas gemischt?", q3: "Um welche genaue Uhrzeit wurde das tödliche Getränk serviert?" },
+    { title: "Sabotage", desc: "Eine Maschine in der Fabrik fiel aus, Millionen-Schaden entstand.", q1: "Welches spezifische Stromkabel wurde absichtlich durchgeschnitten?", q3: "Um wie viel Uhr passierte dieser Vorfall exakt?" },
+    { title: "Unsichtbarer Dieb", desc: "Ein Tresor in einem komplett überwachten Raum wurde geleert.", q1: "Mit welchem Trick wurde die Überwachungskamera im Raum ausgetrickst?", q3: "Was genau war das Ablenkungsmanöver vor der Tür?" },
+    { title: "Gefängnisausbruch", desc: "Zwei Häftlinge sind durch einen unterirdischen Schacht entkommen.", q1: "Welcher Wärter (Name/Spitzname) wurde für den Plan bestochen?", q3: "Wo genau auf dem Außengelände endete der gegrabene Tunnel?" },
+    { title: "Verschwundene Akten", desc: "Sensible Beweismittel im Polizeipräsidium sind plötzlich unauffindbar.", q1: "In welchem spezifischen Aktenschrank im Archiv lagen die Papiere?", q3: "Wer in der Abteilung besaß den geheimen Nachschlüssel?" },
+    { title: "Schmuckraub am Tag", desc: "Ein maskierter Mann raubte ein Geschäft mitten in der Einkaufsstraße aus.", q1: "Welche auffällige Verkleidung oder Maske wurde bei der Tat getragen?", q3: "In welche genaue Himmelsrichtung flüchtete der Täter auf dem Motorrad?" },
+    { title: "Erpressung", desc: "Ein Prominenter wird mit intimen Fotos unter Druck gesetzt.", q1: "Wie genau wurde der drohende Erpresserbrief an das Opfer zugestellt?", q3: "An welchem versteckten Ort soll das verlangte Geld deponiert werden?" },
+    { title: "Der falsche Arzt", desc: "Jemand hat sich Zugang zum Medikamentenschrank des Krankenhauses verschafft.", q1: "Unter welchem falschen Namen/Titel trat der Betrüger auf?", q3: "Welches hochwirksame Medikament wurde bei dem Diebstahl entwendet?" },
+    { title: "Waffenschmuggel", desc: "Ein Container im Hafen war voller illegaler Schusswaffen.", q1: "In welchen Kisten (Tarnung) waren die Waffen geschickt versteckt?", q3: "An welchem spezifischen Pier legte das Schmugglerschiff an?" },
+    { title: "Identitätsdiebstahl", desc: "Millionen wurden von fremden Konten durch Pishing abgebucht.", q1: "Wessen gestohlene Kreditkartendaten wurden für den ersten Test benutzt?", q3: "Welcher luxuriöse Gegenstand wurde als Erstes von dem erbeuteten Geld gekauft?" },
+    { title: "Spionage", desc: "Im Konferenzraum der Firma wurde ein Abhörgerät gefunden.", q1: "Wo genau im Raum war das winzige Mikrofon platziert?", q3: "An wen (Organisation/Person) wurden die geheimen Bänder verkauft?" },
+    { title: "Geldwäsche", desc: "Ein kleines Restaurant machte verdächtig hohe Millionen-Umsätze.", q1: "Wie heißt das Pizzeria-Restaurant, das als Fassade für die Wäsche genutzt wurde?", q3: "Auf welches geheime Offshore-Konto wurde das saubere Geld überwiesen?" },
+    { title: "Kunstraub Venedig", desc: "Ein Gemälde wurde per Boot durch die Kanäle abtransportiert.", q1: "Welches auffällige Motorboot wurde zur schnellen Flucht benutzt?", q3: "An welchem abgelegenen Ort in der Stadt fand der spätere Treffpunkt statt?" },
+    { title: "Briefmarken-Diebstahl", desc: "Eine Sammlung von unschätzbarem Wert wurde ausgetauscht.", q1: "Welche besonders seltene und berühmte Briefmarke fehlt nun?", q3: "In welchem namhaften Auktionshaus sollte diese Marke eigentlich verkauft werden?" },
+    { title: "Der fliegende Tresor", desc: "Ein Tresor wurde per Helikopter aus einem Penthouse geflogen.", q1: "Welcher Hubschrauber-Typ (oder Farbe) kam bei dieser verrückten Aktion zum Einsatz?", q3: "Wo, in welchem verlassenen Gebiet, wurde der schwere Tresor abgeworfen?" },
+    { title: "Der verschwundene Keks", desc: "Ein besonders leckerer Keks fehlt aus der Keksdose der Kommissare.", q1: "Wo warst du gestern Abend um genau 20 Uhr?", q3: "Was ist das Codewort für den versteckten Vorratsschrank?" }
 ];
 
 async function loadDailyCase() {
@@ -312,31 +311,36 @@ async function loadDailyCase() {
     const caseRef = ref(db, `cases/case_${caseIndex + 1}`);
     let snapshot = await get(caseRef);
 
+    let activeCase;
     if (snapshot.exists()) {
-        const data = snapshot.val();
-        caseName.innerText = data.title;
-        q1Text.innerText = data.q1;
-        q3Text.innerText = data.q3;
+        activeCase = snapshot.val();
     } else {
-        // Fallback to hardcoded case (wrap index safely within 0-29)
         const fallbackIndex = caseIndex % 30;
-        const defaultCase = hardcodedCases[fallbackIndex];
-        caseName.innerText = defaultCase.title;
-        q1Text.innerText = defaultCase.q1;
-        q3Text.innerText = defaultCase.q3;
+        activeCase = hardcodedCases[fallbackIndex];
     }
+
+    // Populate Modal File
+    caseName.innerText = activeCase.title;
+    q1Text.innerText = activeCase.q1;
+    q3Text.innerText = activeCase.q3;
+
+    // Populate Cover (Table)
+    coverCaseTitle.innerText = activeCase.title;
+    coverCaseDesc.innerText = activeCase.desc || "Ermittlung läuft...";
+    coverQ1.innerText = "Frage 1: " + activeCase.q1;
 
     setupStage2Roles();
 }
 
 function setupStage2Roles() {
-    // Juls sets on even days, Joe sets on odd days
     const setterRole = isEvenDay ? 'Juls' : 'Joe';
     if (currentUserRole === setterRole) {
         s2SetterView.classList.remove('hidden');
+        s2GuesserHintView.classList.add('hidden');
         s2GuesserView.classList.add('hidden');
     } else {
         s2SetterView.classList.add('hidden');
+        s2GuesserHintView.classList.remove('hidden');
         s2GuesserView.classList.remove('hidden');
     }
 }
@@ -356,33 +360,52 @@ function updateUIBasedOnState(data) {
         a1Input.disabled = true;
         btnSubmit1.disabled = true;
         status1.innerText = "Antwort übermittelt. Warte auf Partner...";
+
+        if (!data.stage1.Juls || !data.stage1.Joe) {
+            speak("Eine Aussage liegt vor. Wir warten auf die Zweite...");
+        }
     }
+
     if (data.stage1 && data.stage1.Juls && data.stage1.Joe) {
         status1.innerText = "Beide Antworten liegen vor!";
         stage2.classList.remove('hidden');
+
+        if (!data.stage2) {
+             const setterRole = isEvenDay ? 'Juls' : 'Joe';
+             if (currentUserRole === setterRole) {
+                 speak(`Interessant... ${currentUserRole}, kleben Sie mir jetzt heimlich einen Kassiber unter den Tisch. Emojis!`, 6000);
+                 scrapPaper.classList.remove('hidden'); // Setter sees it to write
+                 gum.classList.remove('hidden');
+             } else {
+                 speak("Wir prüfen das. Einer von euch verhält sich nervös...", 4000);
+             }
+        }
     }
 
     // --- STAGE 2 ---
     if (data.stage2) {
         if (data.stage2.word && data.stage2.emoji) {
-            // Setter has set the code
             const word = data.stage2.word;
             s2LengthHint.innerText = word.replace(/./g, '_ ').trim();
 
-            // Set emoji in the scrap paper modal instead of file directly
             const scrapHint = document.getElementById('s2-emoji-hint');
             if(scrapHint) scrapHint.innerText = data.stage2.emoji;
 
-            // Show scrap paper and gum under table for the guesser
-            if (s2SetterView.classList.contains('hidden')) {
+            const setterRole = isEvenDay ? 'Juls' : 'Joe';
+
+            if (currentUserRole !== setterRole) {
                 scrapPaper.classList.remove('hidden');
                 gum.classList.remove('hidden');
-            }
-
-            if (s2SetterView.classList.contains('hidden') === false) {
+                if (!data.stage2.guess) {
+                    speak("Ich habe ein Rascheln gehört. Schauen Sie mal unter den Tisch!", 5000);
+                }
+            } else {
                  btnSubmit2Set.disabled = true;
                  s2WordInput.disabled = true;
                  s2EmojiInput.disabled = true;
+                 if (!data.stage2.guess) {
+                    speak("Zettel klebt. Verraten Sie sich nicht durch Blicke.", 4000);
+                 }
             }
         }
 
@@ -394,6 +417,10 @@ function updateUIBasedOnState(data) {
             }
             status2.innerText = "Kassiber übergeben!";
             stage3.classList.remove('hidden');
+
+            if (!data.stage3 || (!data.stage3.Juls || !data.stage3.Joe)) {
+                speak("Genug getuschelt! Beantworten Sie mir nun die finale Frage getrennt voneinander.", 6000);
+            }
         }
     }
 
@@ -403,6 +430,10 @@ function updateUIBasedOnState(data) {
         a3Input.disabled = true;
         btnSubmit3.disabled = true;
         status3.innerText = "Akte geschlossen. Warte auf Auswertung...";
+
+        if (!data.stage3.Juls || !data.stage3.Joe) {
+            speak("Eine finale Aussage steht noch aus...");
+        }
     }
 
     if (data.stage3 && data.stage3.Juls && data.stage3.Joe) {
@@ -467,9 +498,11 @@ function evaluateFinal(data) {
 
     if (isMatch || isOverridden || isRescued) {
         finalVerdict.innerHTML = "<h2 style='color: green;'>FREIHEIT! Akte geschlossen.</h2>";
-        detectivesBg.classList.remove('detectives-lean');
         redAlertSection.classList.add('hidden');
         btnAlibiOverride.classList.add('hidden');
+
+        speak("Ihre Aussagen decken sich. Sie können gehen... für heute.", 6000);
+
         if (!data.scoreProcessed) {
             processWin();
             update(ref(db, `daily/${currentDayStr}`), { scoreProcessed: true });
@@ -479,9 +512,11 @@ function evaluateFinal(data) {
         finalVerdict.innerHTML = "";
         redAlertSection.classList.remove('hidden');
         btnAlibiOverride.classList.remove('hidden');
-        detectivesBg.classList.add('detectives-lean');
         playSound(sfxCreak);
-        showSpeechBubble("Was haben Sie uns zu verbergen?");
+
+        if (!data.rescueSuccess && !data.overrideSuccess) {
+             speak("ROTER ALARM! Ihre Aussagen widersprechen sich! Ein Wort rettet Sie vielleicht noch...", 6000);
+        }
 
         // Handle rescue logic syncing
         if (data.rescue && data.rescue[currentUserRole]) {
@@ -520,17 +555,9 @@ btnRescue.addEventListener('click', () => {
 // Alibi Override
 btnAlibiOverride.addEventListener('click', () => {
     playSound(sfxStamp);
-    showSpeechBubble("Das war haarscharf am Gefängnis vorbei!");
+    speak("Das war haarscharf am Gefängnis vorbei!", 5000);
     update(ref(db, `daily/${currentDayStr}`), { overrideSuccess: true });
 });
-
-function showSpeechBubble(text) {
-    detectiveSpeechText.innerText = text;
-    detectiveSpeech.classList.remove('hidden');
-    setTimeout(() => {
-        detectiveSpeech.classList.add('hidden');
-    }, 5000);
-}
 
 // --- STREAK & RANKS ---
 async function loadStats() {

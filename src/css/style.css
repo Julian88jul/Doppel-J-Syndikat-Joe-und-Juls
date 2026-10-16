@@ -59,6 +59,41 @@ body {
     background-color: #050505;
 }
 
+/* TRANSITIONS & VIEWS */
+.waiting-room {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #050505;
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+}
+
+.waiting-room.fade-out {
+    opacity: 0;
+    transform: scale(1.1);
+    pointer-events: none;
+}
+
+.interrogation-room {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+.interrogation-room.fade-in {
+    opacity: 1;
+}
+
 /* VIEWPORT & SCENE PANNING */
 .viewport {
     width: 100%;
@@ -85,12 +120,34 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    background: #020202; /* Extremely dark */
+}
+
+/* Add a shadowy cabinet in the background */
+.cabinet-shadow {
+    position: absolute;
+    top: 20vh;
+    left: 10vw;
+    width: 250px;
+    height: 400px;
+    background: #000;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.9);
+    opacity: 0.7;
 }
 
 .scene-table-top {
     width: 100%;
     height: 30vh;
     position: relative;
+    /* Spotlight effect on the table */
+    background: radial-gradient(ellipse at center, rgba(30,25,20,1) 0%, rgba(10,8,5,1) 70%, rgba(2,2,2,1) 100%);
+    border-top: 2px solid #1a1510;
+    box-shadow: inset 0 30px 100px rgba(0,0,0,0.9), 0 -10px 50px rgba(0,0,0,1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+    border-radius: 50% 50% 0 0 / 5% 5% 0 0;
 }
 
 .scene-table-under {
@@ -186,17 +243,51 @@ body {
     border-radius: 80px 80px 0 0;
     position: relative;
     opacity: 0.95;
-    filter: drop-shadow(0 0 20px rgba(0,0,0,1));
-    box-shadow: inset 0 20px 50px rgba(255, 255, 200, 0.05); /* Slight edge lighting from lamp */
+    filter: drop-shadow(0 0 30px rgba(0,0,0,1));
+    box-shadow: inset 0 10px 30px rgba(255, 255, 200, 0.05); /* Slight edge lighting from lamp */
+    transform-origin: bottom center;
 }
 
 .detective.grimm {
     transform: scale(0.95);
+    animation: breathing 6s infinite ease-in-out;
 }
 
 .detective.schatten {
     transform: scale(1.1) translateY(10px);
+    animation: breathing 7s infinite ease-in-out alternate-reverse;
 }
+
+@keyframes breathing {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.02) translateY(-2px); }
+}
+
+/* Smoke Particles */
+.smoke-particle {
+    position: absolute;
+    top: 50px;
+    left: 70%;
+    width: 15px;
+    height: 15px;
+    background: rgba(200, 200, 200, 0.2);
+    border-radius: 50%;
+    filter: blur(5px);
+    opacity: 0;
+    animation: smokeRise 4s infinite linear;
+}
+
+.smoke-particle.p1 { animation-delay: 0s; }
+.smoke-particle.p2 { animation-delay: 1.5s; left: 75%; }
+.smoke-particle.p3 { animation-delay: 3s; left: 65%; }
+
+@keyframes smokeRise {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    20% { opacity: 0.6; }
+    80% { transform: translateY(-100px) scale(3) translateX(-20px); opacity: 0; }
+    100% { opacity: 0; }
+}
+
 
 .glowing-eyes, .glowing-glasses {
     position: absolute;
@@ -415,18 +506,6 @@ body {
     transform: rotate(15deg);
 }
 
-/* INTERROGATION TABLE (Now merged into scene) */
-.scene-table-top {
-    background: linear-gradient(to bottom, #1f1a17 0%, #0d0a08 100%); /* Dark wood gradient */
-    border-top: 5px solid #100b08;
-    box-shadow: inset 0 30px 100px rgba(0,0,0,0.9), 0 -10px 30px rgba(0,0,0,0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 5;
-    border-radius: 50% 50% 0 0 / 10% 10% 0 0; /* Slight curve to imply depth */
-}
-
 /* Ensure the game screen anchors nicely without blocking */
 #screen-game {
     display: none;
@@ -434,39 +513,61 @@ body {
 
 .closed-file {
     background: #d4c4a8;
-    width: 180px;
-    height: 250px;
+    width: 300px; /* Made larger to read text */
+    height: 400px;
     border-radius: 5px 20px 5px 5px;
     border: 1px solid #a39171;
-    box-shadow: 5px 5px 15px rgba(0,0,0,0.8);
+    box-shadow: 5px 5px 25px rgba(0,0,0,0.9);
     position: relative;
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transform: rotate(-5deg);
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 30px 20px;
+    transform: rotate(-2deg); /* Less rotation for readability */
     transition: transform 0.2s, box-shadow 0.2s;
+    background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.05"/></svg>');
 }
 
 .closed-file:hover {
-    transform: rotate(-2deg) scale(1.05);
-    box-shadow: 8px 8px 20px rgba(0,0,0,0.9);
+    transform: rotate(0deg) scale(1.02);
+    box-shadow: 8px 8px 30px rgba(0,0,0,1);
 }
 
-.closed-file-title {
-    font-weight: bold;
-    font-size: 1.5rem;
-    color: #222;
-    transform: rotate(-90deg);
+.file-cover-text {
+    font-family: 'Courier Prime', monospace;
+    color: #1a1a1a;
+    width: 100%;
 }
+
+.file-cover-text h4 {
+    font-size: 1.4rem;
+    border-bottom: 2px solid #333;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.file-desc-text {
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+.file-q1-text {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
 
 .stamp-confidential.small {
     font-size: 0.8rem;
     padding: 2px 5px;
     position: absolute;
-    bottom: 20px;
+    top: 10px;
     right: 10px;
+    transform: rotate(15deg);
 }
 
 
@@ -742,32 +843,35 @@ input[type="text"]:focus {
     z-index: 100;
 }
 
-/* SPEECH BUBBLE */
-.speech-bubble {
+/* DIALOG SYSTEM (Subtitles) */
+.dialog-system {
     position: fixed;
-    top: 40%;
+    bottom: 50px;
     left: 50%;
     transform: translateX(-50%);
-    background: #fff;
-    color: #000;
-    padding: 15px;
-    border-radius: 10px;
-    max-width: 300px;
+    width: 90vw;
+    max-width: 800px;
     text-align: center;
-    z-index: 200;
-    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    z-index: 3000;
+    pointer-events: none; /* Let clicks pass through */
 }
 
-.speech-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    border-width: 10px 10px 0;
-    border-style: solid;
-    border-color: #fff transparent transparent;
-    display: block;
-    width: 0;
+#dialog-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.5rem;
+    color: #fff;
+    text-shadow: 2px 2px 4px #000, -1px -1px 2px #000;
+    line-height: 1.4;
+    font-weight: bold;
+}
+
+#dialog-text::after {
+    content: '|';
+    animation: blinkCursor 1s step-end infinite;
+}
+
+.fade-transition {
+    transition: opacity 0.5s ease-in-out;
 }
 
 /* RESPONSIVE */
