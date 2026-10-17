@@ -7,17 +7,52 @@ let currentDayStr = new Date().toISOString().split('T')[0]; // e.g., '2023-10-27
 let isEvenDay = new Date().getDate() % 2 === 0; // Defines role swap for Stage 2
 let isMuted = false;
 
-// --- SOUNDS (Data URIs for self-containment) ---
-// Note: These are very short placeholder beep/click sounds encoded as base64 audio.
-// In a real app, replace with proper base64 encoded wav/mp3 of typewriter/stamp/lamp.
-const sfxTypewriter = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAgACAA==");
-const sfxStamp = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAgACAA==");
-const sfxCreak = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAgACAA==");
+// --- SOUNDS (Synthesized for self-containment) ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-function playSound(sound) {
-    if (!isMuted) {
-        sound.currentTime = 0;
-        sound.play().catch(e => console.log("Audio play blocked by browser."));
+function playTone(freq, type, duration, vol) {
+    if (isMuted || audioCtx.state === 'suspended') return;
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function playSound(soundType) {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    if (soundType === 'typewriter') {
+        // Quick sharp click
+        playTone(600 + Math.random() * 200, 'square', 0.05, 0.1);
+    } else if (soundType === 'stamp') {
+        // Deep thud
+        playTone(100, 'sine', 0.2, 0.5);
+        setTimeout(() => playTone(80, 'square', 0.1, 0.3), 50);
+    } else if (soundType === 'creak') {
+        // High pitched descending squeak
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.5);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
     }
 }
 
@@ -120,7 +155,7 @@ function init() {
 
     // Typewriter sound on input
     document.querySelectorAll('input[type="text"]').forEach(input => {
-        input.addEventListener('input', () => playSound(sfxTypewriter));
+        input.addEventListener('input', () => playSound('typewriter'));
     });
 
     // Check login
@@ -140,6 +175,14 @@ function showScreen(screenKey) {
     screens[screenKey].classList.remove('hidden');
     screens[screenKey].classList.add('active');
 }
+
+// --- INTERACTION LOGIC ---
+// Resume AudioContext on first interaction
+document.body.addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}, { once: true });
 
 // --- PANNING LOGIC ---
 // Move the scene based on mouse position to create a first-person looking effect
@@ -169,12 +212,12 @@ closedFile.addEventListener('click', () => {
     // Do not allow clicking if the game screen hasn't formally started
     if (!screens.game.classList.contains('active')) return;
 
-    playSound(sfxStamp); // Placeholder for open sound
+    playSound('stamp'); // Placeholder for open sound
     openFileModal.classList.remove('hidden');
 });
 
 btnCloseFile.addEventListener('click', () => {
-    playSound(sfxStamp); // Placeholder for close sound
+    playSound('stamp'); // Placeholder for close sound
     openFileModal.classList.add('hidden');
 });
 
@@ -182,12 +225,12 @@ scrapPaper.addEventListener('click', () => {
     // Do not allow clicking if the game screen hasn't formally started
     if (!screens.game.classList.contains('active')) return;
 
-    playSound(sfxStamp);
+    playSound('stamp');
     scrapModal.classList.remove('hidden');
 });
 
 btnCloseScrap.addEventListener('click', () => {
-    playSound(sfxStamp);
+    playSound('stamp');
     scrapModal.classList.add('hidden');
 });
 
@@ -241,7 +284,7 @@ function speak(text, duration = 5000) {
     let i = 0;
     currentDialogInterval = setInterval(() => {
         dialogText.innerText += text.charAt(i);
-        if (text.charAt(i).trim() !== '') playSound(sfxTypewriter);
+        if (text.charAt(i).trim() !== '') playSound('typewriter');
         i++;
         if (i >= text.length) {
             clearInterval(currentDialogInterval);
@@ -370,16 +413,21 @@ function updateUIBasedOnState(data) {
         a1Input.value = data.stage1[currentUserRole];
         a1Input.disabled = true;
         btnSubmit1.disabled = true;
-        status1.innerText = "Antwort übermittelt. Warte auf Partner...";
 
+        // Block transition to stage 2 visually by hiding it explicitly if partner hasn't answered
         if (!data.stage1.Juls || !data.stage1.Joe) {
-            speak("Eine Aussage liegt vor. Wir warten auf die Zweite...");
+            status1.innerText = "Antwort übermittelt. Warte auf Partner...";
+            stage2.classList.add('hidden'); // Keep stage 2 locked
+
+            // Dynamic waiting dialogue
+            const missingRole = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
+            speak(`Ihre Aussage ist notiert. Wir warten jetzt noch auf die Version von ${missingRole}... und dann gleichen wir das mal ab.`, 6000);
         }
     }
 
     if (data.stage1 && data.stage1.Juls && data.stage1.Joe) {
         status1.innerText = "Beide Antworten liegen vor!";
-        stage2.classList.remove('hidden');
+        stage2.classList.remove('hidden'); // Unlock stage 2 automatically
 
         if (!data.stage2) {
              const setterRole = isEvenDay ? 'Juls' : 'Joe';
@@ -440,27 +488,48 @@ function updateUIBasedOnState(data) {
         a3Input.value = data.stage3[currentUserRole];
         a3Input.disabled = true;
         btnSubmit3.disabled = true;
-        status3.innerText = "Akte geschlossen. Warte auf Auswertung...";
 
+        // Wait for partner before showing results
         if (!data.stage3.Juls || !data.stage3.Joe) {
-            speak("Eine finale Aussage steht noch aus...");
+            status3.innerText = "Akte geschlossen. Warte auf Partner...";
+            stageResult.classList.add('hidden'); // Lock results
+
+            const missingRole = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
+            speak(`Mal sehen, ob Ihr Komplize ${missingRole} gleich dieselbe Geschichte erzählt. Wir warten.`, 6000);
         }
     }
 
     if (data.stage3 && data.stage3.Juls && data.stage3.Joe) {
-        stageResult.classList.remove('hidden');
+        status3.innerText = "Beide Aussagen liegen vor!";
+        stageResult.classList.remove('hidden'); // Automatically unlock results
         evaluateFinal(data);
     }
+}
+
+// Helper for Firebase error handling
+function handleFirebaseError(err, reEnableFunc) {
+    console.error("Firebase update error", err);
+    alert("Die Verbindung zum Server ist fehlgeschlagen (Hast du deine Firebase Config eingetragen?). Versuche es erneut.");
+    if (reEnableFunc) reEnableFunc();
 }
 
 // Stage 1 Submit
 btnSubmit1.addEventListener('click', () => {
     const val = a1Input.value.trim();
     if (!val) return;
-    playSound(sfxStamp);
+
+    a1Input.disabled = true;
+    btnSubmit1.disabled = true;
+    status1.innerText = "Sende Daten...";
+    playSound('stamp');
+
     update(ref(db, `daily/${currentDayStr}/stage1`), {
         [currentUserRole]: val
-    });
+    }).catch(err => handleFirebaseError(err, () => {
+        a1Input.disabled = false;
+        btnSubmit1.disabled = false;
+        status1.innerText = "";
+    }));
 });
 
 // Stage 2 Submit Setter
@@ -468,31 +537,56 @@ btnSubmit2Set.addEventListener('click', () => {
     const word = s2WordInput.value.trim();
     const emoji = s2EmojiInput.value.trim();
     if (!word || !emoji) return;
-    playSound(sfxStamp);
+
+    s2WordInput.disabled = true;
+    s2EmojiInput.disabled = true;
+    btnSubmit2Set.disabled = true;
+    playSound('stamp');
+
     update(ref(db, `daily/${currentDayStr}/stage2`), {
         word: word,
         emoji: emoji
-    });
+    }).catch(err => handleFirebaseError(err, () => {
+        s2WordInput.disabled = false;
+        s2EmojiInput.disabled = false;
+        btnSubmit2Set.disabled = false;
+    }));
 });
 
 // Stage 2 Submit Guesser
 btnSubmit2Guess.addEventListener('click', () => {
     const guess = s2GuessInput.value.trim();
     if (!guess) return;
-    playSound(sfxStamp);
+
+    s2GuessInput.disabled = true;
+    btnSubmit2Guess.disabled = true;
+    playSound('stamp');
+
     update(ref(db, `daily/${currentDayStr}/stage2`), {
         guess: guess
-    });
+    }).catch(err => handleFirebaseError(err, () => {
+        s2GuessInput.disabled = false;
+        btnSubmit2Guess.disabled = false;
+    }));
 });
 
 // Stage 3 Submit
 btnSubmit3.addEventListener('click', () => {
     const val = a3Input.value.trim();
     if (!val) return;
-    playSound(sfxStamp);
+
+    a3Input.disabled = true;
+    btnSubmit3.disabled = true;
+    status3.innerText = "Sende Daten...";
+    playSound('stamp');
+
     update(ref(db, `daily/${currentDayStr}/stage3`), {
         [currentUserRole]: val
-    });
+    }).catch(err => handleFirebaseError(err, () => {
+        a3Input.disabled = false;
+        btnSubmit3.disabled = false;
+        status3.innerText = "";
+    }));
 });
 
 // --- EVALUATION ---
@@ -523,7 +617,7 @@ function evaluateFinal(data) {
         finalVerdict.innerHTML = "";
         redAlertSection.classList.remove('hidden');
         btnAlibiOverride.classList.remove('hidden');
-        playSound(sfxCreak);
+        playSound('creak');
 
         if (!data.rescueSuccess && !data.overrideSuccess) {
              speak("ROTER ALARM! Ihre Aussagen widersprechen sich! Ein Wort rettet Sie vielleicht noch...", 6000);
@@ -557,17 +651,29 @@ function evaluateFinal(data) {
 btnRescue.addEventListener('click', () => {
     const val = rescueInput.value.trim();
     if (!val) return;
-    playSound(sfxStamp);
+
+    rescueInput.disabled = true;
+    btnRescue.disabled = true;
+    playSound('stamp');
+
     update(ref(db, `daily/${currentDayStr}/rescue`), {
         [currentUserRole]: val
-    });
+    }).catch(err => handleFirebaseError(err, () => {
+        rescueInput.disabled = false;
+        btnRescue.disabled = false;
+    }));
 });
 
 // Alibi Override
 btnAlibiOverride.addEventListener('click', () => {
-    playSound(sfxStamp);
+    btnAlibiOverride.disabled = true;
+    playSound('stamp');
     speak("Das war haarscharf am Gefängnis vorbei!", 5000);
-    update(ref(db, `daily/${currentDayStr}`), { overrideSuccess: true });
+
+    update(ref(db, `daily/${currentDayStr}`), { overrideSuccess: true })
+        .catch(err => handleFirebaseError(err, () => {
+            btnAlibiOverride.disabled = false;
+        }));
 });
 
 // --- STREAK & RANKS ---
