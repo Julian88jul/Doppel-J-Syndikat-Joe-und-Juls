@@ -493,6 +493,14 @@ function handleFirebaseError(err, reEnableFunc) {
     if (reEnableFunc) reEnableFunc();
 }
 
+// Helper for timeout Firebase calls
+function updateWithTimeout(refPath, dataObj, timeoutMs = 3000) {
+    return Promise.race([
+        update(refPath, dataObj),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout: Keine Verbindung zur Datenbank.")), timeoutMs))
+    ]);
+}
+
 // Stage 1 Submit
 btnSubmit1.addEventListener('click', () => {
     const val = a1Input.value.trim();
@@ -503,7 +511,7 @@ btnSubmit1.addEventListener('click', () => {
     status1.innerText = "Sende Daten...";
     playSound('stamp');
 
-    update(ref(db, `daily/${currentDayStr}/stage1`), {
+    updateWithTimeout(ref(db, `daily/${currentDayStr}/stage1`), {
         [currentUserRole]: val
     }).catch(err => handleFirebaseError(err, () => {
         a1Input.disabled = false;
@@ -523,7 +531,7 @@ btnSubmit2Set.addEventListener('click', () => {
     btnSubmit2Set.disabled = true;
     playSound('stamp');
 
-    update(ref(db, `daily/${currentDayStr}/stage2`), {
+    updateWithTimeout(ref(db, `daily/${currentDayStr}/stage2`), {
         word: word,
         emoji: emoji
     }).catch(err => handleFirebaseError(err, () => {
@@ -542,7 +550,7 @@ btnSubmit2Guess.addEventListener('click', () => {
     btnSubmit2Guess.disabled = true;
     playSound('stamp');
 
-    update(ref(db, `daily/${currentDayStr}/stage2`), {
+    updateWithTimeout(ref(db, `daily/${currentDayStr}/stage2`), {
         guess: guess
     }).catch(err => handleFirebaseError(err, () => {
         s2GuessInput.disabled = false;
@@ -560,7 +568,7 @@ btnSubmit3.addEventListener('click', () => {
     status3.innerText = "Sende Daten...";
     playSound('stamp');
 
-    update(ref(db, `daily/${currentDayStr}/stage3`), {
+    updateWithTimeout(ref(db, `daily/${currentDayStr}/stage3`), {
         [currentUserRole]: val
     }).catch(err => handleFirebaseError(err, () => {
         a3Input.disabled = false;
@@ -636,7 +644,7 @@ btnRescue.addEventListener('click', () => {
     btnRescue.disabled = true;
     playSound('stamp');
 
-    update(ref(db, `daily/${currentDayStr}/rescue`), {
+    updateWithTimeout(ref(db, `daily/${currentDayStr}/rescue`), {
         [currentUserRole]: val
     }).catch(err => handleFirebaseError(err, () => {
         rescueInput.disabled = false;
@@ -650,7 +658,7 @@ btnAlibiOverride.addEventListener('click', () => {
     playSound('stamp');
     speak("Das war haarscharf am Gefängnis vorbei!", 5000);
 
-    update(ref(db, `daily/${currentDayStr}`), { overrideSuccess: true })
+    updateWithTimeout(ref(db, `daily/${currentDayStr}`), { overrideSuccess: true })
         .catch(err => handleFirebaseError(err, () => {
             btnAlibiOverride.disabled = false;
         }));
