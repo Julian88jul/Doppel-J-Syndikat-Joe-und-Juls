@@ -15,44 +15,10 @@
 
     <div class="room-container">
 
-        <!-- 1. WAITING ROOM (Static Background for Login/Role Select) -->
-        <div id="waiting-room" class="waiting-room active">
-            <div class="waiting-room-content">
-
-                <!-- Login / PIN Screen -->
-                <section id="screen-login" class="screen active">
-                    <div class="login-box">
-                        <h2>ZUTRITT BESCHRÄNKT</h2>
-                        <p>PIN eingeben:</p>
-                        <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="****">
-                        <button id="pin-submit">Entsperren</button>
-                        <p id="pin-error" class="error hidden">Falsche PIN.</p>
-                    </div>
-                </section>
-
-                <!-- Role Selection -->
-                <section id="screen-role-select" class="screen hidden">
-                    <h2>Wähle deine Akte</h2>
-                    <div class="role-cards">
-                        <div class="file-card" data-role="Juls">
-                            <span class="file-title">Akte: Juls</span>
-                            <div class="stamp-confidential">STRENG GEHEIM</div>
-                        </div>
-                        <div class="file-card" data-role="Joe">
-                            <span class="file-title">Akte: Joe</span>
-                            <div class="stamp-confidential">STRENG GEHEIM</div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        <!-- 2. INTERROGATION ROOM (3D Panning Scene) -->
-        <div id="interrogation-room" class="interrogation-room hidden">
-            <!-- Viewport for 3D/Panning effects via Mouse Movement -->
-            <div id="viewport" class="viewport">
-                <!-- The massive scene that moves around -->
-                <div id="scene-container" class="scene-container">
+        <!-- Viewport for 3D/Panning effects via Mouse Movement -->
+        <div id="viewport" class="viewport">
+            <!-- The massive scene that moves around -->
+            <div id="scene-container" class="scene-container intro-view">
 
                     <!-- THE WALL (Straight Ahead) -->
                     <div class="scene-wall">
@@ -68,9 +34,12 @@
                         <div class="detectives-bg">
                             <div class="detective grimm">
                                 <div class="glowing-eyes"></div>
-                                <div class="smoke-particle p1"></div>
-                                <div class="smoke-particle p2"></div>
-                                <div class="smoke-particle p3"></div>
+                                <div class="cigarette">
+                                    <div class="cigarette-tip"></div>
+                                    <div class="smoke-particle p1"></div>
+                                    <div class="smoke-particle p2"></div>
+                                    <div class="smoke-particle p3"></div>
+                                </div>
                             </div>
                             <div class="detective schatten">
                                 <div class="glowing-glasses"></div>
@@ -104,21 +73,48 @@
                     </div>
 
                 </div> <!-- /scene-container -->
-            </div> <!-- /viewport -->
+        </div> <!-- /viewport -->
 
-            <!-- FIXED UI LAYER (Stays perfectly still while scene moves) -->
-            <div class="ui-layer">
+        <!-- FIXED UI LAYER (Stays perfectly still while scene moves) -->
+        <div class="ui-layer">
 
-                <!-- Dashboard: Streak & Rank -->
-                <div id="stats-board" class="stats-board hidden">
-                    <div>Streak: <span id="streak-count">0</span> Tage</div>
-                    <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
-                </div>
+            <!-- Dashboard: Streak & Rank -->
+            <div id="stats-board" class="stats-board hidden">
+                <div>Streak: <span id="streak-count">0</span> Tage</div>
+                <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
+            </div>
 
-                <main class="main-content">
-                    <!-- Hidden Game Anchor -->
-                    <section id="screen-game" class="screen hidden"></section>
-                </main>
+            <main class="main-content">
+
+                <!-- Login / PIN Screen -->
+                <section id="screen-login" class="screen active fade-transition">
+                    <div class="login-box">
+                        <h2>ZUTRITT BESCHRÄNKT</h2>
+                        <p>PIN eingeben:</p>
+                        <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="****">
+                        <button id="pin-submit">Entsperren</button>
+                        <p id="pin-error" class="error hidden">Falsche PIN.</p>
+                    </div>
+                </section>
+
+                <!-- Role Selection -->
+                <section id="screen-role-select" class="screen hidden fade-transition">
+                    <h2>Wähle deine Akte</h2>
+                    <div class="role-cards">
+                        <div class="file-card" data-role="Juls">
+                            <span class="file-title">Akte: Juls</span>
+                            <div class="stamp-confidential">STRENG GEHEIM</div>
+                        </div>
+                        <div class="file-card" data-role="Joe">
+                            <span class="file-title">Akte: Joe</span>
+                            <div class="stamp-confidential">STRENG GEHEIM</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hidden Game Anchor -->
+                <section id="screen-game" class="screen hidden"></section>
+            </main>
 
                 <!-- Open Police File (Modal overlay) -->
                 <div id="open-file-modal" class="file-modal hidden">
@@ -206,24 +202,23 @@
                 </div>
 
                 <!-- Smuggle File Screen (Hidden) -->
-                <div id="screen-smuggle" class="file-modal hidden">
-                    <div class="police-file">
+            <div id="screen-smuggle" class="file-modal hidden">
+                <div class="police-file">
                         <h2>Neue Akte schmuggeln</h2>
                         <input type="text" id="new-case-title" placeholder="Tatvorwurf">
                         <input type="text" id="new-q1" placeholder="Frage Stufe 1">
                         <input type="text" id="new-q3" placeholder="Frage Stufe 3 (Finale)">
                         <button id="btn-smuggle-save">In Datenbank eintragen</button>
                         <button id="btn-smuggle-back">Zurück</button>
-                    </div>
                 </div>
+            </div>
 
                 <!-- NEW: Subtitles Dialog System -->
                 <div id="dialog-system" class="dialog-system">
                     <p id="dialog-text"></p>
                 </div>
 
-            </div> <!-- /ui-layer -->
-        </div> <!-- /interrogation-room -->
+        </div> <!-- /ui-layer -->
 
     </div> <!-- /room-container -->
 

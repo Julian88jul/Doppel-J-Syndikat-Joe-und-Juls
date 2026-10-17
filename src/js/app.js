@@ -22,9 +22,6 @@ function playSound(sound) {
 }
 
 // --- DOM ELEMENTS ---
-const waitingRoom = document.getElementById('waiting-room');
-const interrogationRoom = document.getElementById('interrogation-room');
-
 const screens = {
     login: document.getElementById('screen-login'),
     roleSelect: document.getElementById('screen-role-select'),
@@ -182,6 +179,9 @@ btnCloseFile.addEventListener('click', () => {
 });
 
 scrapPaper.addEventListener('click', () => {
+    // Do not allow clicking if the game screen hasn't formally started
+    if (!screens.game.classList.contains('active')) return;
+
     playSound(sfxStamp);
     scrapModal.classList.remove('hidden');
 });
@@ -206,26 +206,25 @@ pinSubmitBtn.addEventListener('click', () => {
 roleCards.forEach(card => {
     card.addEventListener('click', async () => {
         currentUserRole = card.getAttribute('data-role');
-        statsBoard.classList.add('hidden');
 
         await loadDailyCase();
 
-        // Transition from waiting room to interrogation room
-        waitingRoom.classList.add('fade-out');
-        setTimeout(() => {
-            interrogationRoom.classList.remove('hidden');
-            // Trigger reflow
-            void interrogationRoom.offsetWidth;
-            interrogationRoom.classList.add('fade-in');
+        // Fade out role select
+        screens.roleSelect.classList.add('fade-out');
 
-            showScreen('game'); // set active
+        setTimeout(() => {
+            showScreen('game'); // Make game anchor active so panning triggers
             statsBoard.classList.remove('hidden');
+
+            // Remove intro zoom, pulling the player to the table
+            sceneContainer.classList.remove('intro-view');
+
             listenToGameState();
             loadStats();
 
             // Start dialogue
             speak("Setzt euch. Wir haben einige Fragen an euch...", 4000);
-        }, 1500);
+        }, 500); // short wait to let UI fade out before panning into table
     });
 });
 
@@ -289,33 +288,45 @@ const hardcodedCases = [
 ];
 
 async function loadDailyCase() {
-    // First, determine how many cases are actually in the DB to support smuggled cases
-    const casesRef = ref(db, 'cases');
-    const casesSnapshot = await get(casesRef);
-
     let totalCases = 30; // fallback minimum
-    if (casesSnapshot.exists()) {
-        totalCases = Math.max(30, Object.keys(casesSnapshot.val()).length);
-    }
+    let activeCase = hardcodedCases[0]; // absolute fallback
 
-    // Determine which case to load based on day of year to rotate through ALL cases
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const diff = now - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
+    try {
+        // Implement a timeout to prevent hanging on placeholder credentials
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 3000));
 
-    const caseIndex = (dayOfYear % totalCases);
+        // First, determine how many cases are actually in the DB to support smuggled cases
+        const casesRef = ref(db, 'cases');
+        const casesSnapshot = await Promise.race([get(casesRef), timeoutPromise]);
 
-    // Try to load from DB first
-    const caseRef = ref(db, `cases/case_${caseIndex + 1}`);
-    let snapshot = await get(caseRef);
+        if (casesSnapshot.exists()) {
+            totalCases = Math.max(30, Object.keys(casesSnapshot.val()).length);
+        }
 
-    let activeCase;
-    if (snapshot.exists()) {
-        activeCase = snapshot.val();
-    } else {
-        const fallbackIndex = caseIndex % 30;
+        // Determine which case to load based on day of year to rotate through ALL cases
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        const diff = now - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+
+        const caseIndex = (dayOfYear % totalCases);
+
+        // Try to load from DB first
+        const caseRef = ref(db, `cases/case_${caseIndex + 1}`);
+        let snapshot = await Promise.race([get(caseRef), timeoutPromise]);
+
+        if (snapshot.exists()) {
+            activeCase = snapshot.val();
+        } else {
+            const fallbackIndex = caseIndex % 30;
+            activeCase = hardcodedCases[fallbackIndex];
+        }
+    } catch (e) {
+        // If Firebase get fails (e.g. placeholder config), fallback gracefully
+        console.warn("Could not load from Firebase. Using local hardcoded case.", e);
+        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        const fallbackIndex = dayOfYear % 30;
         activeCase = hardcodedCases[fallbackIndex];
     }
 
@@ -570,27 +581,31 @@ async function loadStats() {
 }
 
 async function processWin() {
-    const statsRef = ref(db, `stats`);
-    const snap = await get(statsRef);
+    try {
+        const statsRef = ref(db, `stats`);
+        const snap = await Promise.race([get(statsRef), new Promise((_, r) => setTimeout(r, 2000))]);
 
-    if (snap.val() && snap.val().lastWin === currentDayStr) {
-        return; // Already processed today
-    }
+        if (snap && snap.val() && snap.val().lastWin === currentDayStr) {
+            return; // Already processed today
+        }
 
-    let streak = (snap.val() && snap.val().streak) ? snap.val().streak : 0;
-    streak++;
-    set(statsRef, { streak, lastWin: currentDayStr });
+        let streak = (snap && snap.val() && snap.val().streak) ? snap.val().streak : 0;
+        streak++;
+        set(statsRef, { streak, lastWin: currentDayStr });
+    } catch(e) {} // fail silently if db doesn't work
 }
 
 async function processLoss() {
-    const statsRef = ref(db, `stats`);
-    const snap = await get(statsRef);
+    try {
+        const statsRef = ref(db, `stats`);
+        const snap = await Promise.race([get(statsRef), new Promise((_, r) => setTimeout(r, 2000))]);
 
-    if (snap.val() && snap.val().lastLoss === currentDayStr) {
-        return; // Already processed today
-    }
+        if (snap && snap.val() && snap.val().lastLoss === currentDayStr) {
+            return; // Already processed today
+        }
 
-    set(statsRef, { streak: 0, lastLoss: currentDayStr });
+        set(statsRef, { streak: 0, lastLoss: currentDayStr });
+    } catch(e) {}
 }
 
 const ranks = [

@@ -59,41 +59,6 @@ body {
     background-color: #050505;
 }
 
-/* TRANSITIONS & VIEWS */
-.waiting-room {
-    width: 100%;
-    height: 100vh;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background: #050505;
-    z-index: 2000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
-}
-
-.waiting-room.fade-out {
-    opacity: 0;
-    transform: scale(1.1);
-    pointer-events: none;
-}
-
-.interrogation-room {
-    width: 100%;
-    height: 100vh;
-    position: absolute;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    transition: opacity 2s ease-in-out;
-}
-
-.interrogation-room.fade-in {
-    opacity: 1;
-}
-
 /* VIEWPORT & SCENE PANNING */
 .viewport {
     width: 100%;
@@ -105,11 +70,17 @@ body {
     width: 120vw;
     height: 150vh; /* Taller to allow looking down */
     position: absolute;
-    /* Center it initially */
+    /* Base center point */
     top: -25vh;
     left: -10vw;
-    /* Quick transform based on JS mousemove */
-    transition: transform 0.1s ease-out;
+    /* Smooth transition for panning */
+    transition: transform 0.15s ease-out;
+}
+
+/* Specific view for the beginning so you see the detectives well */
+.scene-container.intro-view {
+    transform: scale(0.9) translateY(-10vh) !important;
+    transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .scene-wall {
@@ -175,6 +146,15 @@ body {
 
 /* Re-enable pointer events for interactive UI parts */
 .ui-layer > * {
+    pointer-events: auto;
+}
+
+/* Ensure the main content wrapper doesn't block background clicks */
+.main-content {
+    pointer-events: none !important;
+}
+
+.main-content > * {
     pointer-events: auto;
 }
 
@@ -263,28 +243,56 @@ body {
     50% { transform: scale(1.02) translateY(-2px); }
 }
 
-/* Smoke Particles */
+/* Cigarette & Smoke */
+.cigarette {
+    position: absolute;
+    top: 70px;
+    left: 65%;
+    width: 20px;
+    height: 3px;
+    background: #e0e0e0;
+    transform: rotate(-15deg);
+    border-radius: 2px;
+}
+
+.cigarette-tip {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 3px;
+    background: #ff3333;
+    border-radius: 0 2px 2px 0;
+    box-shadow: 0 0 8px 2px rgba(255, 50, 50, 0.9);
+    animation: glowPulse 2s infinite alternate;
+}
+
+@keyframes glowPulse {
+    from { opacity: 0.7; box-shadow: 0 0 5px 1px rgba(255, 50, 50, 0.8); }
+    to { opacity: 1; box-shadow: 0 0 10px 3px rgba(255, 50, 50, 1); }
+}
+
 .smoke-particle {
     position: absolute;
-    top: 50px;
-    left: 70%;
-    width: 15px;
-    height: 15px;
+    top: -5px;
+    right: 0;
+    width: 10px;
+    height: 10px;
     background: rgba(200, 200, 200, 0.2);
     border-radius: 50%;
-    filter: blur(5px);
+    filter: blur(4px);
     opacity: 0;
     animation: smokeRise 4s infinite linear;
 }
 
 .smoke-particle.p1 { animation-delay: 0s; }
-.smoke-particle.p2 { animation-delay: 1.5s; left: 75%; }
-.smoke-particle.p3 { animation-delay: 3s; left: 65%; }
+.smoke-particle.p2 { animation-delay: 1.5s; right: -2px; }
+.smoke-particle.p3 { animation-delay: 3s; right: 2px; }
 
 @keyframes smokeRise {
     0% { transform: translateY(0) scale(1); opacity: 0; }
     20% { opacity: 0.6; }
-    80% { transform: translateY(-100px) scale(3) translateX(-20px); opacity: 0; }
+    80% { transform: translateY(-80px) scale(3) translateX(-15px); opacity: 0; }
     100% { opacity: 0; }
 }
 
@@ -872,6 +880,11 @@ input[type="text"]:focus {
 
 .fade-transition {
     transition: opacity 0.5s ease-in-out;
+}
+
+.fade-transition.fade-out {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* RESPONSIVE */
