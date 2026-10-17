@@ -298,36 +298,14 @@ function speak(text, duration = 5000) {
 // --- GAME LOGIC ---
 
 const hardcodedCases = [
-    { title: "Bankraub in Berlin", desc: "Zwei bewaffnete Täter räumten gestern den Tresor der Sparkasse leer.", q1: "Welches Auto stand zur Flucht bereit?", q3: "Was war genau in der großen Tasche?" },
-    { title: "Der Juwelen-Coup", desc: "Einbruch beim Nobel-Juwelier. Vitrinen wurden professionell zerschnitten.", q1: "Wo hast du die Diamanten danach versteckt?", q3: "Wer genau war dein Komplize bei der Aktion?" },
-    { title: "Kunstfälscher", desc: "Ein bekannter Van Gogh wurde in der Galerie durch eine Fälschung ersetzt.", q1: "Welches Detail im Gemälde wurde fehlerhaft kopiert?", q3: "Wo befindet sich das echte Original jetzt?" },
-    { title: "Casino-Betrug", desc: "Verdacht auf Kartenzählen und gezinkte Karten am Blackjack-Tisch.", q1: "Mit welchem Mittel wurden die Karten auf der Rückseite markiert?", q3: "Wer hat den Croupier im entscheidenden Moment abgelenkt?" },
-    { title: "Museumseinbruch", desc: "Ein unbezahlbares Artefakt fehlt. Keine Einbruchsspuren an den Türen.", q1: "Mit welchem Trick wurde die Laser-Alarmanlage deaktiviert?", q3: "Durch welches Fenster im Gebäude seid ihr eingestiegen?" },
-    { title: "Tresorknacker", desc: "Ein antiker Tresor der Familie von Hohenfels wurde über Nacht geleert.", q1: "Welches spezielle Werkzeug wurde zum Knacken benutzt?", q3: "Wie lautete die exakte Zahlenkombination des Schlosses?" },
-    { title: "Goldschmuggel", desc: "Mehrere Barren Gold wurden am Zoll vorbeigeschmuggelt.", q1: "In welchem Alltagsgegenstand war das Gold versteckt?", q3: "Über welchen Hafenhafen in Europa kam die heiße Ware?" },
-    { title: "Hackerangriff", desc: "Das Servernetzwerk eines Tech-Riesen wurde lahmgelegt und Daten erbeutet.", q1: "Welches Passwort des Admins konntet ihr herausfinden?", q3: "Auf welchem geheimen Server im Ausland liegen die Daten jetzt?" },
-    { title: "Autodiebstahl", desc: "Ein seltener, roter Sportwagen verschwand spurlos aus der Tiefgarage.", q1: "Welche exakte Farbe und Marke hatte der gestohlene Wagen?", q3: "In welcher Werkstatt wurde das Auto anschließend in Einzelteile zerlegt?" },
-    { title: "Entführung", desc: "Der Bürgermeister wurde auf dem Weg zur Arbeit abgefangen.", q1: "In welchem verlassenen Gebäude wurde er gefangen gehalten?", q3: "Wie hoch war die genaue Lösegeldforderung in Scheinen?" },
-    { title: "Geheime Dokumente", desc: "Top Secret Pläne für einen neuen Motor wurden entwendet.", q1: "Welcher Deckname wurde für diese Operation intern verwendet?", q3: "Wo genau fand die klandestine Übergabe der Papiere statt?" },
-    { title: "Falschgeldring", desc: "Es sind täuschend echte 100-Euro-Blüten im Umlauf aufgetaucht.", q1: "In welchem Kellerabteil steht eure Druckerpresse?", q3: "Welches spezielle Papier aus welchem Land wurde dafür verwendet?" },
-    { title: "Diamantenschmuggel", desc: "Blutdiamanten wurden am Flughafen sichergestellt.", q1: "In welchem spezifischen Kleidungsstück waren die Steine eingenäht?", q3: "Wie lautete die genaue Flugnummer der Maschine?" },
-    { title: "Kunstraub in Paris", desc: "Aus dem Louvre fehlt ein weltbekanntes Porträt.", q1: "Das Werk welches berühmten Künstlers wurde gestohlen?", q3: "Wer genau hat den Fluchtwagen nach dem Raub gesteuert?" },
-    { title: "Giftmischer", desc: "Ein reicher Erbe brach nach einem Abendessen plötzlich zusammen.", q1: "Welches seltene Gift wurde ins Rotweinglas gemischt?", q3: "Um welche genaue Uhrzeit wurde das tödliche Getränk serviert?" },
-    { title: "Sabotage", desc: "Eine Maschine in der Fabrik fiel aus, Millionen-Schaden entstand.", q1: "Welches spezifische Stromkabel wurde absichtlich durchgeschnitten?", q3: "Um wie viel Uhr passierte dieser Vorfall exakt?" },
-    { title: "Unsichtbarer Dieb", desc: "Ein Tresor in einem komplett überwachten Raum wurde geleert.", q1: "Mit welchem Trick wurde die Überwachungskamera im Raum ausgetrickst?", q3: "Was genau war das Ablenkungsmanöver vor der Tür?" },
-    { title: "Gefängnisausbruch", desc: "Zwei Häftlinge sind durch einen unterirdischen Schacht entkommen.", q1: "Welcher Wärter (Name/Spitzname) wurde für den Plan bestochen?", q3: "Wo genau auf dem Außengelände endete der gegrabene Tunnel?" },
-    { title: "Verschwundene Akten", desc: "Sensible Beweismittel im Polizeipräsidium sind plötzlich unauffindbar.", q1: "In welchem spezifischen Aktenschrank im Archiv lagen die Papiere?", q3: "Wer in der Abteilung besaß den geheimen Nachschlüssel?" },
-    { title: "Schmuckraub am Tag", desc: "Ein maskierter Mann raubte ein Geschäft mitten in der Einkaufsstraße aus.", q1: "Welche auffällige Verkleidung oder Maske wurde bei der Tat getragen?", q3: "In welche genaue Himmelsrichtung flüchtete der Täter auf dem Motorrad?" },
-    { title: "Erpressung", desc: "Ein Prominenter wird mit intimen Fotos unter Druck gesetzt.", q1: "Wie genau wurde der drohende Erpresserbrief an das Opfer zugestellt?", q3: "An welchem versteckten Ort soll das verlangte Geld deponiert werden?" },
-    { title: "Der falsche Arzt", desc: "Jemand hat sich Zugang zum Medikamentenschrank des Krankenhauses verschafft.", q1: "Unter welchem falschen Namen/Titel trat der Betrüger auf?", q3: "Welches hochwirksame Medikament wurde bei dem Diebstahl entwendet?" },
-    { title: "Waffenschmuggel", desc: "Ein Container im Hafen war voller illegaler Schusswaffen.", q1: "In welchen Kisten (Tarnung) waren die Waffen geschickt versteckt?", q3: "An welchem spezifischen Pier legte das Schmugglerschiff an?" },
-    { title: "Identitätsdiebstahl", desc: "Millionen wurden von fremden Konten durch Pishing abgebucht.", q1: "Wessen gestohlene Kreditkartendaten wurden für den ersten Test benutzt?", q3: "Welcher luxuriöse Gegenstand wurde als Erstes von dem erbeuteten Geld gekauft?" },
-    { title: "Spionage", desc: "Im Konferenzraum der Firma wurde ein Abhörgerät gefunden.", q1: "Wo genau im Raum war das winzige Mikrofon platziert?", q3: "An wen (Organisation/Person) wurden die geheimen Bänder verkauft?" },
-    { title: "Geldwäsche", desc: "Ein kleines Restaurant machte verdächtig hohe Millionen-Umsätze.", q1: "Wie heißt das Pizzeria-Restaurant, das als Fassade für die Wäsche genutzt wurde?", q3: "Auf welches geheime Offshore-Konto wurde das saubere Geld überwiesen?" },
-    { title: "Kunstraub Venedig", desc: "Ein Gemälde wurde per Boot durch die Kanäle abtransportiert.", q1: "Welches auffällige Motorboot wurde zur schnellen Flucht benutzt?", q3: "An welchem abgelegenen Ort in der Stadt fand der spätere Treffpunkt statt?" },
-    { title: "Briefmarken-Diebstahl", desc: "Eine Sammlung von unschätzbarem Wert wurde ausgetauscht.", q1: "Welche besonders seltene und berühmte Briefmarke fehlt nun?", q3: "In welchem namhaften Auktionshaus sollte diese Marke eigentlich verkauft werden?" },
-    { title: "Der fliegende Tresor", desc: "Ein Tresor wurde per Helikopter aus einem Penthouse geflogen.", q1: "Welcher Hubschrauber-Typ (oder Farbe) kam bei dieser verrückten Aktion zum Einsatz?", q3: "Wo, in welchem verlassenen Gebiet, wurde der schwere Tresor abgeworfen?" },
-    { title: "Der verschwundene Keks", desc: "Ein besonders leckerer Keks fehlt aus der Keksdose der Kommissare.", q1: "Wo warst du gestern Abend um genau 20 Uhr?", q3: "Was ist das Codewort für den versteckten Vorratsschrank?" }
+    { title: "Der Schmuggel an der Ostsee", desc: "Wir haben Berichte über Schmuggelware an der Küste. Sie behaupten, Sie waren dort nur für Ihren Urlaub.", q1: "Wenn das stimmt: Wie heißt der genaue Ort an der Ostsee?", q3: "Wo war die Schmuggelware wirklich versteckt?" },
+    { title: "Lärmbelästigung oder Bandenkrieg?", desc: "Die Nachbarn haben extreme Schreie aus Ihrer Wohnung gemeldet. Sie schieben es auf ein Videospiel.", q1: "Welches Spiel hat Sie angeblich so ausrasten lassen?", q3: "Wer hat im Spiel eigentlich den Fehler gemacht?" },
+    { title: "Der auffällige Flucht-Unfall", desc: "Am Tatort wurden seltsame Schleifspuren gefunden. Sie behaupten, Joe hätte sich einfach mal wieder das Knie gebrochen.", q1: "Womit genau ist sie damals angeblich verunglückt?", q3: "Wer hat die Ambulanz gerufen?" },
+    { title: "Die abgehörte Funkfrequenz", desc: "Wir haben Ihren Funkverkehr abgehört. Jemand rief panisch: 'Schnell, steig auf, Bebi Maus!'", q1: "Womit genau sind Sie beide danach in die Nacht geflüchtet?", q3: "Wer saß am Steuer?" },
+    { title: "Die tierische Sabotage", desc: "Die Überwachungskameras wurden von einem Tier sabotiert, das Sie heimlich trainiert haben.", q1: "Welches Tier haben Sie durch den Lüftungsschacht geschickt?", q3: "Welche Belohnung hat das Tier danach bekommen?" },
+    { title: "Das unauffällige Fast-Food", desc: "Sie behaupten, Sie waren zur Tatzeit in einem Drive-in. Wir haben den Wagen durchsucht.", q1: "Welches Fast-Food-Gericht lag angeblich noch auf dem Beifahrersitz?", q3: "Welches Getränk war im Getränkehalter?" },
+    { title: "Der Haushalts-Ausbruch", desc: "Jemand hat das Schloss zur Tresorkammer mit einem völlig ungeeigneten Gegenstand aus der Küche geknackt.", q1: "Was haben Sie als Werkzeug zweckentfremdet?", q3: "Wer von Ihnen hat das Schloss geknackt?" },
+    { title: "Der falsche Deckname", desc: "Ein Zeuge hat gehört, wie Sie Ihren Komplizen bei der Flucht mit dem Namen eines Charakters aus einer Serie gerufen haben.", q1: "Welcher Name aus Ihrer gemeinsamen Lieblingsserie war das?", q3: "Welchen Decknamen hatte der Fahrer?" }
 ];
 
 async function loadDailyCase() {
@@ -343,7 +321,9 @@ async function loadDailyCase() {
         const casesSnapshot = await Promise.race([get(casesRef), timeoutPromise]);
 
         if (casesSnapshot.exists()) {
-            totalCases = Math.max(30, Object.keys(casesSnapshot.val()).length);
+            totalCases = Math.max(hardcodedCases.length, Object.keys(casesSnapshot.val()).length);
+        } else {
+            totalCases = hardcodedCases.length;
         }
 
         // Determine which case to load based on day of year to rotate through ALL cases
@@ -362,14 +342,14 @@ async function loadDailyCase() {
         if (snapshot.exists()) {
             activeCase = snapshot.val();
         } else {
-            const fallbackIndex = caseIndex % 30;
+            const fallbackIndex = caseIndex % hardcodedCases.length;
             activeCase = hardcodedCases[fallbackIndex];
         }
     } catch (e) {
         // If Firebase get fails (e.g. placeholder config), fallback gracefully
         console.warn("Could not load from Firebase. Using local hardcoded case.", e);
         const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-        const fallbackIndex = dayOfYear % 30;
+        const fallbackIndex = dayOfYear % hardcodedCases.length;
         activeCase = hardcodedCases[fallbackIndex];
     }
 
