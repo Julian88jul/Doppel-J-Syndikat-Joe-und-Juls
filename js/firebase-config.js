@@ -103,7 +103,7 @@ function createServerApi() {
         get: async (r) => snapshot(await read(r.path)),
         set: (r, value) => write('set', r.path, value),
         update: (r, values) => write('update', r.path, values),
-        // Der Server kennt keine Push-Nachrichten, deshalb jede Sekunde nachsehen und nur bei Änderung melden
+        // Der Server kennt keine Push-Nachrichten, deshalb zweimal pro Sekunde nachsehen und nur bei Änderung melden
         onValue: (r, cb) => {
             let last;
             let stopped = false;
@@ -116,7 +116,7 @@ function createServerApi() {
                 } catch (e) { /* kurzer Verbindungsabbruch: nächste Runde */ }
             };
             tick();
-            const id = setInterval(tick, 1000);
+            const id = setInterval(tick, 500);
             return () => { stopped = true; clearInterval(id); };
         }
     };

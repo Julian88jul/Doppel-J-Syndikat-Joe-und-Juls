@@ -234,6 +234,8 @@
                         <div class="prop ashtray"></div>
                         <div class="prop pen"></div>
                         <div class="prop lamp-glow"></div>
+                        <!-- Level 3: Die beschlagnahmten Gegenstände liegen auf dem Tisch -->
+                        <div id="table-items" class="table-items hidden"></div>
                         <!-- Closed file on the table -->
                         <div id="closed-file" class="closed-file" title="Akte öffnen">
                             <div class="stamp-confidential small">STRENG GEHEIM</div>
@@ -269,6 +271,9 @@
                 <button id="bar-scrap" class="bar-btn hidden" title="Notiz öffnen">🗒 Notiz</button>
                 <span id="next-step" class="next-step"></span>
             </div>
+
+            <!-- Countdown der 1-Minuten-Panik (immer sichtbar, auch bei geschlossener Akte) -->
+            <div id="panic-hud" class="panic-hud hidden">⏰ <span id="panic-hud-seconds">60</span></div>
 
             <!-- Dashboard: Streak & Rank -->
             <div id="stats-board" class="stats-board hidden">
@@ -322,7 +327,7 @@
                         <div class="progress-track" id="progress-track">
                             <span class="progress-step" data-step="1">1 Aussage</span>
                             <span class="progress-step" data-step="2">2 Notiz</span>
-                            <span class="progress-step" data-step="3">3 Finale</span>
+                            <span class="progress-step" data-step="3">3 Alibi</span>
                             <span class="progress-step" data-step="4">4 Urteil</span>
                         </div>
 
@@ -352,16 +357,16 @@
                         </div>
 
                         <div class="stage-container hidden fade-transition" id="stage-3">
-                            <h3>Stufe 3: Der Widerspruch (Finale)</h3>
+                            <h3>Stufe 3: Der Alibi-Beweis</h3>
                             <p id="clue-text" class="clue-text"></p>
-                            <p class="question-text" id="q3-text">Lade finale Frage...</p>
-                            <input type="text" id="a3-input" placeholder="Finale Antwort...">
-                            <button id="btn-submit-3" class="btn-typewriter">Aussage abgeben</button>
+                            <p class="question-text" id="q3-text">Lade Frage...</p>
+                            <p class="stage-hint">Ihr bestreitet die Tat. Tippt ohne Absprache <b>denselben</b> Gegenstand an, um euer Alibi zu beweisen.</p>
+                            <div id="item-grid" class="item-grid"></div>
                             <div class="status-msg" id="status-3"></div>
                         </div>
 
                         <div class="stage-container hidden fade-transition" id="stage-result">
-                            <h3>Verhör-Ergebnis</h3>
+                            <h3 id="result-title">Verhör-Ergebnis</h3>
                             <div class="result-comparison">
                                 <div class="result-box">
                                     <h4>Juls</h4>
@@ -373,17 +378,22 @@
                                 </div>
                             </div>
 
-                            <div id="red-alert-section" class="hidden fade-transition">
-                                <h4 class="red-alert-title">ROTER ALARM! DISKREPANZ!</h4>
-                                <p>Die Kommissare werden misstrauisch. Eine letzte Chance: Tippt schnell ein verbindendes Wort ein!</p>
-                                <input type="text" id="rescue-input" placeholder="Verbindendes Wort...">
-                                <button id="btn-rescue" class="btn-typewriter">Rettungsversuch</button>
+                            <!-- Level 4: Die 1-Minuten-Panik -->
+                            <div id="panic-section" class="panic-section hidden">
+                                <div class="panic-timer"><span id="panic-seconds">60</span><small>Sek.</small></div>
+                                <p class="panic-text">Eure Aussage ist geplatzt! Schickt so viele Wörter, wie ihr wollt. Ihr seid frei, sobald euer <b>letztes Wort bei beiden gleich</b> ist.</p>
+                                <div class="panic-last">
+                                    <div><span>Dein letztes Wort</span><b id="panic-mine">–</b></div>
+                                    <div><span id="panic-partner-label">Partner</span><b id="panic-theirs">–</b></div>
+                                </div>
+                                <div id="panic-log" class="panic-log"></div>
+                                <div class="panic-input-row">
+                                    <input type="text" id="panic-input" placeholder="Wort eintippen..." autocomplete="off">
+                                    <button id="btn-panic-send" class="btn-typewriter">Senden</button>
+                                </div>
                             </div>
 
                             <div id="final-verdict"></div>
-
-                            <!-- Manual Alibi Override (if failed) -->
-                            <button id="btn-alibi-override" class="btn-alibi hidden">Alibi hält trotzdem! (Als Treffer werten)</button>
                         </div>
                     </div>
                 </div>

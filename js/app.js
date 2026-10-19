@@ -92,6 +92,12 @@ function playSound(soundType) {
         [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.25, 0.25), i * 120));
     } else if (soundType === 'lose') {
         [330, 262, 196, 130].forEach((f, i) => setTimeout(() => playTone(f, 'sawtooth', 0.35, 0.2), i * 220));
+    } else if (soundType === 'tick') {
+        playTone(1250, 'square', 0.04, 0.22);
+    } else if (soundType === 'tock') {
+        playTone(900, 'square', 0.05, 0.22);
+    } else if (soundType === 'pop') {
+        playTone(700, 'sine', 0.08, 0.3);
     } else if (soundType === 'alarm') {
         [880, 660, 880, 660].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.18, 0.15), i * 200));
     } else if (soundType === 'creak') {
@@ -174,8 +180,8 @@ const btnSubmit2Guess = document.getElementById('btn-submit-2-guess');
 const status2 = document.getElementById('status-2');
 
 const q3Text = document.getElementById('q3-text');
-const a3Input = document.getElementById('a3-input');
-const btnSubmit3 = document.getElementById('btn-submit-3');
+const itemGrid = document.getElementById('item-grid');
+const tableItems = document.getElementById('table-items');
 const status3 = document.getElementById('status-3');
 
 const dialogSystem = document.getElementById('dialog-system');
@@ -183,11 +189,19 @@ const dialogText = document.getElementById('dialog-text');
 
 const resJuls = document.getElementById('res-juls');
 const resJoe = document.getElementById('res-joe');
-const redAlertSection = document.getElementById('red-alert-section');
-const rescueInput = document.getElementById('rescue-input');
-const btnRescue = document.getElementById('btn-rescue');
 const finalVerdict = document.getElementById('final-verdict');
-const btnAlibiOverride = document.getElementById('btn-alibi-override');
+
+// Level 4: Panik
+const panicSection = document.getElementById('panic-section');
+const panicSecondsEl = document.getElementById('panic-seconds');
+const panicHud = document.getElementById('panic-hud');
+const panicHudSeconds = document.getElementById('panic-hud-seconds');
+const panicMine = document.getElementById('panic-mine');
+const panicTheirs = document.getElementById('panic-theirs');
+const panicPartnerLabel = document.getElementById('panic-partner-label');
+const panicLog = document.getElementById('panic-log');
+const panicInput = document.getElementById('panic-input');
+const btnPanicSend = document.getElementById('btn-panic-send');
 
 const detectivesBg = document.querySelector('.detectives-bg');
 
@@ -326,8 +340,7 @@ const enterTargets = {
     'a1-input': btnSubmit1,
     's2-guess-input': btnSubmit2Guess,
     's2-emoji-input': btnSubmit2Set,
-    'a3-input': btnSubmit3,
-    'rescue-input': btnRescue
+    'panic-input': btnPanicSend
 };
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && enterTargets[e.target.id] && !enterTargets[e.target.id].disabled) {
@@ -499,32 +512,32 @@ function shakeScreen() {
 // --- GAME LOGIC ---
 
 // type 'personal': feste Ziel-Antwort (targets), type 'general': beide müssen dasselbe Wort tippen
-const CASES_VERSION = 2;
+const CASES_VERSION = 3; // 3: Alibi-Fragen für Level 3
 const hardcodedCases = [
     { id: 'case_1', type: 'personal', speaker: 'grimm', title: "Der Schmuggel an der Ostsee",
       desc: "Wir haben Berichte über Schmuggelware an der Küste. Sie behaupten, Sie waren dort nur für Ihren einzigen gemeinsamen Urlaub.",
-      q1: "Wenn das stimmt: Wie heißt der genaue Ort an der Ostsee?", q3: "Wo war die Schmuggelware wirklich versteckt?", targets: ["Scharbeutz"] },
+      q1: "Wenn das stimmt: Wie heißt der genaue Ort an der Ostsee?", q3: "Sie behaupten, Sie hätten den Abend ganz unschuldig am Strand verbracht. Welchen dieser Gegenstände hatten Sie dabei angeblich in der Tasche?", targets: ["Scharbeutz"] },
     { id: 'case_2', type: 'personal', speaker: 'schatten', title: "Lärmbelästigung oder Bandenkrieg?",
       desc: "Die Nachbarn haben extreme Schreie aus Ihrer Wohnung gemeldet. Sie schieben es auf ein harmloses Videospiel.",
-      q1: "Welches Spiel hat Sie angeblich so ausrasten lassen?", q3: "Wer hat im Spiel eigentlich den Fehler gemacht?", targets: ["Brawl Stars"] },
+      q1: "Welches Spiel hat Sie angeblich so ausrasten lassen?", q3: "Sie behaupten, Sie hätten nur friedlich gezockt. Welcher dieser Gegenstände lag dabei angeblich neben der Konsole?", targets: ["Brawl Stars"] },
     { id: 'case_3', type: 'personal', speaker: 'grimm', title: "Der auffällige Flucht-Unfall",
       desc: "Am Tatort wurden seltsame Schleifspuren gefunden. Sie behaupten, Joe hätte sich einfach mal wieder das Knie gebrochen.",
-      q1: "Womit genau ist sie damals angeblich verunglückt?", q3: "Wer hat die Ambulanz gerufen?", targets: ["E-Scooter", "Scooter"] },
+      q1: "Womit genau ist sie damals angeblich verunglückt?", q3: "Sie behaupten, es war nur ein harmloser Ausflug. Welchen dieser Gegenstände hatten Sie angeblich im Rucksack dabei?", targets: ["E-Scooter", "Scooter"] },
     { id: 'case_4', type: 'personal', speaker: 'schatten', title: "Die abgehörte Funkfrequenz",
       desc: "Wir haben Ihren Funkverkehr abgehört. Jemand rief panisch: 'Schnell, steig auf, Bebi Maus!'",
-      q1: "Womit genau sind Sie beide danach in die Nacht geflüchtet?", q3: "Wer saß am Steuer?", targets: ["Moped"] },
+      q1: "Womit genau sind Sie beide danach in die Nacht geflüchtet?", q3: "Sie behaupten, Sie seien nur zum Eisessen gefahren. Welchen dieser Gegenstände hatten Sie angeblich im Helmfach?", targets: ["Moped"] },
     { id: 'case_5', type: 'general', speaker: 'grimm', title: "Die tierische Sabotage",
       desc: "Die Überwachungskameras wurden von einem Tier sabotiert, das Sie heimlich trainiert haben.",
-      q1: "Welches Tier haben Sie durch den Lüftungsschacht geschickt?", q3: "Welche Belohnung hat das Tier danach bekommen?" },
+      q1: "Welches Tier haben Sie durch den Lüftungsschacht geschickt?", q3: "Sie behaupten, Sie waren zur Tatzeit unschuldig im Park spazieren. Welchen kuriosen Gegenstand hatten Sie laut Ihrer Aussage zufällig in der Tasche?" },
     { id: 'case_6', type: 'general', speaker: 'schatten', title: "Das unauffällige Fast-Food",
       desc: "Sie behaupten, Sie waren zur Tatzeit in einem Drive-in. Wir haben den Wagen durchsucht.",
-      q1: "Welches Fast-Food-Gericht lag angeblich noch auf dem Beifahrersitz?", q3: "Welches Getränk war im Getränkehalter?" },
+      q1: "Welches Fast-Food-Gericht lag angeblich noch auf dem Beifahrersitz?", q3: "Um Ihr Alibi zu beweisen: Welchen dieser Gegenstände haben Sie an dem Abend im Drive-in angeblich aufs Armaturenbrett gelegt?" },
     { id: 'case_7', type: 'general', speaker: 'grimm', title: "Der Haushalts-Ausbruch",
       desc: "Jemand hat das Schloss zur Tresorkammer mit einem völlig ungeeigneten Gegenstand aus der Küche geknackt.",
-      q1: "Was haben Sie als Werkzeug zweckentfremdet?", q3: "Wer von Ihnen hat das Schloss geknackt?" },
+      q1: "Was haben Sie als Werkzeug zweckentfremdet?", q3: "Sie behaupten, Sie hätten an dem Abend nur gekocht. Welcher dieser Gegenstände lag dabei angeblich auf der Arbeitsplatte?" },
     { id: 'case_8', type: 'general', speaker: 'schatten', title: "Der falsche Deckname",
       desc: "Ein Zeuge hat gehört, wie Sie Ihren Komplizen bei der Flucht mit dem Namen eines Charakters aus Ihrer gemeinsamen Lieblingsserie gerufen haben.",
-      q1: "Welcher Name war das?", q3: "Welchen Decknamen hatte der Fahrer?" }
+      q1: "Welcher Name war das?", q3: "Sie behaupten, Sie hätten den ganzen Abend Serie geschaut. Welchen dieser Gegenstände hatten Sie dabei angeblich auf dem Sofa liegen?" }
 ];
 
 let activeCase = hardcodedCases[0];
@@ -607,6 +620,72 @@ function pickCaseForDay(caseList, dayStr) {
     return caseList[((seed ^ (seed >>> 16)) >>> 0) % caseList.length];
 }
 
+// --- LEVEL 3: Die 10 beschlagnahmten Gegenstände (Tascheninhalte für das Alibi) ---
+const ALIBI_ITEMS = [
+    { id: 'puempel', name: 'Pümpel', icon: '🪠' },
+    { id: 'alien', name: '3D-gedrucktes Alien', icon: '👽' },
+    { id: 'klobuerste', name: 'Klobürste', icon: '🧹' },
+    { id: 'schlauch', name: 'Gartenschlauch', icon: '🪢' },
+    { id: 'ente', name: 'Quietscheente', icon: '🦆' },
+    { id: 'lippenstift', name: 'Lippenstift', icon: '💄' },
+    { id: 'schluessel', name: 'Abgebrochener Schlüssel', icon: '🗝️' },
+    { id: 'taschenuhr', name: 'Taschenuhr', icon: '⏱️' },
+    { id: 'kaktus', name: 'Kaktus', icon: '🌵' },
+    { id: 'klapphandy', name: 'Klapphandy', icon: '📱' }
+];
+// Feste Plätze auf dem Tisch links und rechts der Akte (in % der Tischfläche)
+const TABLE_SPOTS = [
+    [4, 14], [17, 36], [6, 58], [22, 70], [12, 84],
+    [76, 16], [88, 36], [72, 60], [90, 66], [80, 84]
+];
+
+function itemById(id) {
+    return ALIBI_ITEMS.find(i => i.id === id);
+}
+function itemLabel(id) {
+    const it = itemById(id);
+    return it ? `${it.icon} ${it.name}` : (id || '-');
+}
+
+// Pro Tag gemischt, aber für beide Spieler in derselben Reihenfolge
+function itemsForDay(dayStr) {
+    let seed = 7;
+    for (const ch of dayStr) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) >>> 0;
+    const rnd = () => { seed = (Math.imul(seed ^ (seed >>> 15), 2246822507) + 0x6d2b79f5) >>> 0; return seed / 4294967296; };
+    const list = [...ALIBI_ITEMS];
+    for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(rnd() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+}
+
+function renderAlibiItems() {
+    const items = itemsForDay(currentDayStr);
+    itemGrid.innerHTML = '';
+    tableItems.innerHTML = '';
+    items.forEach((it, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'item-card';
+        btn.dataset.item = it.id;
+        btn.innerHTML = `<span class="item-icon">${it.icon}</span><span class="item-name">${it.name}</span>`;
+        btn.addEventListener('click', () => chooseAlibiItem(it.id));
+        itemGrid.appendChild(btn);
+
+        // Dieselben Gegenstände liegen auch in der Szene auf dem Tisch; Antippen öffnet die Akte
+        const onTable = document.createElement('div');
+        onTable.className = 'table-item';
+        onTable.title = it.name;
+        onTable.textContent = it.icon;
+        const [x, y] = TABLE_SPOTS[idx % TABLE_SPOTS.length];
+        onTable.style.left = `${x}%`;
+        onTable.style.top = `${y}%`;
+        onTable.style.setProperty('--rot', `${(idx * 37) % 50 - 25}deg`);
+        onTable.addEventListener('click', () => closedFile.click());
+        tableItems.appendChild(onTable);
+    });
+}
+
 async function loadDailyCase() {
     let caseList = hardcodedCases.map(c => normalizeCase(c.id, c));
     let chosenId = null;
@@ -649,6 +728,8 @@ async function loadDailyCase() {
     coverCaseTitle.innerText = activeCase.title;
     coverCaseDesc.innerText = activeCase.desc || "Ermittlung läuft...";
     coverQ1.innerText = "Frage 1: " + activeCase.q1;
+
+    renderAlibiItems();
 
     // Alibi-Frage der Notiz (Stufe 2)
     document.getElementById('s2-question-file').innerText = activeCase.q2;
@@ -743,7 +824,9 @@ function refreshActionBar(data, target, isSetter) {
             text = s2.word ? 'Lies die Notiz und errate die Alibi-Antwort.' : 'Dein Partner schreibt dir gerade eine Notiz …';
         }
     } else if (target === stage3) {
-        text = s3[currentUserRole] ? 'Warte auf die finale Aussage deines Partners …' : 'Beantworte die finale Frage.';
+        text = s3[currentUserRole] ? 'Warte, welchen Gegenstand dein Partner wählt …' : 'Beweise dein Alibi: Wähle in der Akte einen der 10 Gegenstände.';
+    } else if (s3.Juls && s3.Joe && s3.Juls !== s3.Joe && !data.result) {
+        text = '⏰ PANIK! Schickt Wörter, bis euer letztes Wort gleich ist!';
     } else {
         text = 'Das Urteil ist gefallen.';
     }
@@ -756,7 +839,8 @@ function refreshActionBar(data, target, isSetter) {
     // Akte pulsiert, wenn man selbst als Nächstes dran ist und nichts offen ist
     const myTurnInFile = !fileEverOpened || (target === stage1 && !s1[currentUserRole]) ||
         (target === stage2 && !isSetter && s2.word && !s2.guess) ||
-        (target === stage3 && !s3[currentUserRole]);
+        (target === stage3 && !s3[currentUserRole]) ||
+        (target === stageResult && s3.Juls !== s3.Joe && !data.result);
     btnBarFile.classList.toggle('pulse', !!myTurnInFile && !needsScrap);
 }
 
@@ -898,42 +982,62 @@ function updateUIBasedOnState(data) {
                     : `✘ Alibi wackelt: geraten „${data.stage2.guess}“, gemeint war „${data.stage2.word}“`;
             }
             stage3.classList.remove('hidden');
+            // Die beschlagnahmten Tascheninhalte liegen jetzt auf dem Tisch
+            tableItems.classList.remove('hidden');
 
             if (!data.stage3 || (!data.stage3.Juls || !data.stage3.Joe)) {
                 const clueEl = document.getElementById('clue-text');
                 if (clueEl) clueEl.innerText = activeCase.clue ? `🔍 Neues Indiz: ${activeCase.clue}` : '';
-                // Die Detektive kommen zurück und vergleichen das Alibi aus der Notiz
+                // Die Detektive kommen zurück, vergleichen das Alibi aus der Notiz und leeren die Taschen aus
                 const alibiHolds = data.stage2.word && normalizeAnswer(data.stage2.guess) === normalizeAnswer(data.stage2.word);
                 const alibiLine = alibiHolds
                     ? "Euer Alibi deckt sich. Verdächtig gut. "
                     : "Euer Alibi hat Lücken. Das gefällt mir. ";
-                sayOnce('s3intro', `So, da sind wir wieder. ${alibiLine}Und wir haben etwas gefunden: ${activeCase.clue} Jetzt die finale Frage, getrennt voneinander: ${activeCase.q3}`, 10000, activeCase.speaker);
+                sayOnce('s3intro', `So, da sind wir wieder. ${alibiLine}Wir haben etwas gefunden: ${activeCase.clue} Sie bestreiten die Tat? Dann beweisen Sie Ihr Alibi. Wir haben Ihre Taschen geleert, alles liegt auf dem Tisch. ${activeCase.q3}`, 12000, activeCase.speaker);
                 if (alibiHolds && !spoken.s3win) { spoken.s3win = true; playSound('win'); }
             }
         }
     }
 
-    // --- STAGE 3 ---
-    if (data.stage3 && data.stage3[currentUserRole]) {
-        a3Input.value = data.stage3[currentUserRole];
-        a3Input.disabled = true;
-        btnSubmit3.disabled = true;
-
-        // Wait for partner before showing results
-        if (!data.stage3.Juls || !data.stage3.Joe) {
-            status3.innerText = "Akte geschlossen. Warte auf Partner...";
-            stageResult.classList.add('hidden'); // Lock results
-
-            const missingRole = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
-            sayOnce('s3wait', `Mal sehen, ob Ihr Komplize ${missingRole} gleich dieselbe Geschichte erzählt. Wir warten.`, 6000);
-        }
+    // --- STAGE 3: DER ALIBI-BEWEIS ---
+    const s3 = data.stage3 || {};
+    const myItem = s3[currentUserRole];
+    itemGrid.querySelectorAll('.item-card').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.item === myItem);
+        btn.disabled = !!myItem;
+    });
+    if (myItem && (!s3.Juls || !s3.Joe)) {
+        status3.innerText = `Du hast gewählt: ${itemLabel(myItem)}. Warte auf deinen Partner...`;
+        stageResult.classList.add('hidden');
+        const missingRole = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
+        sayOnce('s3wait', `Notiert. Mal sehen, ob ${missingRole} dieselbe Geschichte erzählt.`, 5000);
     }
 
-    if (data.stage3 && data.stage3.Juls && data.stage3.Joe) {
-        status3.innerText = "Beide Aussagen liegen vor!";
-        stageResult.classList.remove('hidden'); // Automatically unlock results
+    if (s3.Juls && s3.Joe) {
+        status3.innerText = "Beide haben ausgesagt!";
+        stageResult.classList.remove('hidden');
         evaluateFinal(data);
     }
+}
+
+// Level 3: Gegenstand anklicken
+function chooseAlibiItem(itemId) {
+    if (itemGrid.querySelector('.item-card.selected')) return; // schon gewählt
+    itemGrid.querySelectorAll('.item-card').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.toggle('selected', btn.dataset.item === itemId);
+    });
+    status3.innerText = "Sende Aussage...";
+    playSound('stamp');
+    closeFileSoon();
+
+    // Zeitpunkt zuerst speichern: Daraus berechnen beide Geräte denselben Panik-Countdown
+    updateWithTimeout(ref(db, `daily/${currentDayStr}/stage3At`), { [currentUserRole]: Date.now() })
+        .then(() => updateWithTimeout(ref(db, `daily/${currentDayStr}/stage3`), { [currentUserRole]: itemId }))
+        .catch(err => handleFirebaseError(err, () => {
+            itemGrid.querySelectorAll('.item-card').forEach(btn => { btn.disabled = false; btn.classList.remove('selected'); });
+            status3.innerText = "";
+        }));
 }
 
 // Helper for Firebase error handling
@@ -1013,128 +1117,191 @@ btnSubmit2Guess.addEventListener('click', () => {
     }));
 });
 
-// Stage 3 Submit
-btnSubmit3.addEventListener('click', () => {
-    const val = a3Input.value.trim();
-    if (!val) return;
+// --- EVALUATION (Level 3) & LEVEL 4: DIE 1-MINUTEN-PANIK ---
+const PANIC_SECONDS = 60;
+const PANIC_LEAD_MS = 4000; // kurze Alarm-Phase, bevor der Countdown losläuft
+let panicInterval = null;
+let lastPanicData = null;
+let lastTickSecond = null;
 
-    a3Input.disabled = true;
-    btnSubmit3.disabled = true;
-    status3.innerText = "Sende Daten...";
-    playSound('stamp');
-    closeFileSoon();
+// Beide Geräte rechnen denselben Countdown aus: ab der späteren der beiden Aussagen aus Level 3
+function panicTimes(data) {
+    const at = data.stage3At || {};
+    const base = Math.max(at.Juls || 0, at.Joe || 0) || Date.now();
+    const start = base + PANIC_LEAD_MS;
+    return { start, end: start + PANIC_SECONDS * 1000 };
+}
 
-    updateWithTimeout(ref(db, `daily/${currentDayStr}/stage3`), {
-        [currentUserRole]: val
-    }).catch(err => handleFirebaseError(err, () => {
-        a3Input.disabled = false;
-        btnSubmit3.disabled = false;
-        status3.innerText = "";
-    }));
+function lastWord(data, role) {
+    const entry = data.panic && data.panic[role];
+    return entry && entry.word ? entry.word : '';
+}
+
+function panicIsMatch(data) {
+    const a = normalizeAnswer(lastWord(data, 'Juls'));
+    const b = normalizeAnswer(lastWord(data, 'Joe'));
+    return a.length > 0 && a === b;
+}
+
+function evaluateFinal(data) {
+    resJuls.innerText = itemLabel(data.stage3.Juls);
+    resJoe.innerText = itemLabel(data.stage3.Joe);
+
+    // Level 3 geschafft: beide haben denselben Gegenstand gewählt
+    if (data.stage3.Juls === data.stage3.Joe) {
+        finishGame(data, true, 'alibi');
+        return;
+    }
+
+    // Aussage geplatzt -> Level 4
+    lastPanicData = data;
+    if (data.result === 'win') { finishGame(data, true, 'panic'); return; }
+    if (data.result === 'lose') { finishGame(data, false, 'panic'); return; }
+    if (panicIsMatch(data)) {
+        updateWithTimeout(ref(db, `daily/${currentDayStr}`), { result: 'win' }).catch(() => {});
+        finishGame(data, true, 'panic');
+        return;
+    }
+    runPanic(data);
+}
+
+function runPanic(data) {
+    document.getElementById('result-title').innerText = 'ROTER ALARM: Die Aussage ist geplatzt!';
+    panicSection.classList.remove('hidden');
+    panicHud.classList.remove('hidden');
+    document.body.classList.add('panic-mode');
+
+    if (autoShown.final !== 'alarm') {
+        autoShown.final = 'alarm';
+        playSound('alarm');
+        shakeScreen();
+        speak("ROTER ALARM! Eure Geschichten passen nicht zusammen! Ihr habt eine Minute. Sagt beide dasselbe – oder ab in die Zelle!", 6000, 'grimm');
+    }
+
+    // Partnerwörter und eigene Wörter anzeigen
+    const partner = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
+    panicPartnerLabel.innerText = `${DISPLAY_NAMES[partner]}s letztes Wort`;
+    panicMine.innerText = lastWord(data, currentUserRole) || '–';
+    panicTheirs.innerText = lastWord(data, partner) || '–';
+    renderPanicLog(data);
+
+    if (!panicInterval) {
+        panicInterval = setInterval(panicTick, 250);
+        panicTick();
+    }
+}
+
+function renderPanicLog(data) {
+    const log = (data.panic && data.panic.log) ? Object.entries(data.panic.log) : [];
+    log.sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0) || a[0].localeCompare(b[0]));
+    const known = panicLog.childElementCount;
+    if (log.length === known) return;
+    panicLog.innerHTML = '';
+    log.forEach(([, e]) => {
+        const line = document.createElement('div');
+        line.className = `panic-msg ${e.role === currentUserRole ? 'mine' : 'theirs'}`;
+        line.innerHTML = `<span class="who"></span><span class="word"></span>`;
+        line.querySelector('.who').textContent = e.role === currentUserRole ? 'Du' : DISPLAY_NAMES[e.role];
+        line.querySelector('.word').textContent = e.word;
+        panicLog.appendChild(line);
+    });
+    panicLog.scrollTop = panicLog.scrollHeight;
+    // Neues Wort vom Partner: kurzer Ton
+    const newest = log[log.length - 1];
+    if (log.length > known && newest && newest[1].role !== currentUserRole) playSound('pop');
+}
+
+function panicTick() {
+    if (!lastPanicData) return;
+    const { start, end } = panicTimes(lastPanicData);
+    const now = Date.now();
+    const secondsLeft = Math.max(0, Math.ceil((end - Math.max(now, start)) / 1000));
+    panicSecondsEl.innerText = secondsLeft;
+    panicHudSeconds.innerText = secondsLeft;
+    panicHud.classList.toggle('urgent', secondsLeft <= 10);
+
+    const running = now >= start && now < end;
+    panicInput.disabled = !running;
+    btnPanicSend.disabled = !running;
+    if (now < start) panicInput.placeholder = 'Gleich geht\'s los...';
+    else if (running) panicInput.placeholder = 'Wort eintippen + Enter';
+
+    // Ticken jede Sekunde, in den letzten 10 Sekunden doppelt
+    if (running && secondsLeft !== lastTickSecond) {
+        lastTickSecond = secondsLeft;
+        playSound(secondsLeft % 2 ? 'tick' : 'tock');
+        if (secondsLeft <= 10) setTimeout(() => playSound('tick'), 250);
+    }
+
+    // Zeit abgelaufen ohne Übereinstimmung -> Knast
+    if (now >= end && !panicIsMatch(lastPanicData)) {
+        updateWithTimeout(ref(db, `daily/${currentDayStr}`), { result: 'lose' }).catch(() => {});
+        finishGame(lastPanicData, false, 'panic');
+    }
+}
+
+function stopPanic() {
+    clearInterval(panicInterval);
+    panicInterval = null;
+    document.body.classList.remove('panic-mode');
+    panicHud.classList.add('hidden');
+    panicInput.disabled = true;
+    btnPanicSend.disabled = true;
+}
+
+// Level 4: Wort absenden (unbegrenzt oft)
+btnPanicSend.addEventListener('click', () => {
+    const word = panicInput.value.trim();
+    if (!word || btnPanicSend.disabled) return;
+    const ts = Date.now();
+    panicInput.value = '';
+    panicInput.focus();
+    playSound('typewriter');
+    panicMine.innerText = word;
+
+    const base = `daily/${currentDayStr}/panic`;
+    Promise.all([
+        updateWithTimeout(ref(db, base), { [currentUserRole]: { word, ts } }),
+        updateWithTimeout(ref(db, `${base}/log`), { [`${ts}_${currentUserRole}`]: { role: currentUserRole, word, ts } })
+    ]).catch(err => console.warn('Wort konnte nicht gesendet werden', err));
 });
 
-// --- EVALUATION ---
-function evaluateFinal(data) {
-    const ansJuls = normalizeAnswer(data.stage3.Juls);
-    const ansJoe = normalizeAnswer(data.stage3.Joe);
+function finishGame(data, won, how) {
+    stopPanic();
+    panicSection.classList.toggle('hidden', how !== 'panic');
+    const titleEl = document.getElementById('result-title');
 
-    resJuls.innerText = data.stage3.Juls;
-    resJoe.innerText = data.stage3.Joe;
-
-    const isMatch = ansJuls === ansJoe;
-    const isOverridden = data.overrideSuccess === true;
-    const isRescued = data.rescueSuccess === true;
-
-    if (isMatch || isOverridden || isRescued) {
-        finalVerdict.innerHTML = "<h2 style='color: green;'>FREIHEIT! Akte geschlossen.</h2>";
-        redAlertSection.classList.add('hidden');
-        btnAlibiOverride.classList.add('hidden');
-
+    if (won) {
+        titleEl.innerText = how === 'alibi' ? 'Das Alibi ist wasserdicht!' : 'Gerade noch mal davongekommen!';
+        finalVerdict.innerHTML = "<h2 style='color: green;'>FREIHEIT! Das Doppel-J-Syndikat ist frei.</h2>";
         if (autoShown.final !== 'win') {
-            speak("Ihre Aussagen decken sich. Sie können gehen... für heute.", 6000);
             autoShown.final = 'win';
             playSound('win');
             showVerdictStamp('FREIHEIT!', 'win');
+            speak(how === 'alibi'
+                ? "Hm. Beide derselbe Gegenstand. Ihr Alibi ist wasserdicht. Sie können gehen... für heute."
+                : "Tsk. Im letzten Moment dieselbe Geschichte. Na gut. Verschwinden Sie.", 6000, how === 'alibi' ? 'schatten' : 'grimm');
         }
-
         if (!data.scoreProcessed) {
             processWin();
             update(ref(db, `daily/${currentDayStr}`), { scoreProcessed: true });
         }
     } else {
-        // Mismatch
-        finalVerdict.innerHTML = "";
-        redAlertSection.classList.remove('hidden');
-        btnAlibiOverride.classList.remove('hidden');
-        if (autoShown.final !== 'alarm') {
-            autoShown.final = 'alarm';
-            playSound('alarm');
+        titleEl.innerText = 'Die Minute ist um!';
+        finalVerdict.innerHTML = "<h2 style='color: red;'>VERHAFTET! Ab in den Knast.</h2>";
+        if (autoShown.final !== 'lose') {
+            autoShown.final = 'lose';
+            playSound('lose');
+            showVerdictStamp('VERHAFTET!', 'lose');
             shakeScreen();
+            speak("Die Zeit ist um. Ihre Geschichten passen nicht zusammen. Abführen!", 6000, 'grimm');
         }
-
-        if (!data.rescueSuccess && !data.overrideSuccess) {
-             sayOnce('alarmline', "ROTER ALARM! Ihre Aussagen widersprechen sich! Ein Wort rettet Sie vielleicht noch...", 6000);
-        }
-
-        // Handle rescue logic syncing
-        if (data.rescue && data.rescue[currentUserRole]) {
-            rescueInput.value = data.rescue[currentUserRole];
-            rescueInput.disabled = true;
-            btnRescue.disabled = true;
-        }
-
-        if (data.rescue && data.rescue.Juls && data.rescue.Joe) {
-            const rJuls = normalizeAnswer(data.rescue.Juls);
-            const rJoe = normalizeAnswer(data.rescue.Joe);
-            if (rJuls === rJoe) {
-                update(ref(db, `daily/${currentDayStr}`), { rescueSuccess: true });
-            } else {
-                finalVerdict.innerHTML = "<h2 style='color: red;'>VERHAFTET! Eure Geschichten passen nicht zusammen.</h2>";
-                redAlertSection.classList.add('hidden');
-                btnAlibiOverride.classList.add('hidden');
-                if (autoShown.final !== 'lose') {
-                    autoShown.final = 'lose';
-                    playSound('lose');
-                    showVerdictStamp('VERHAFTET!', 'lose');
-                    shakeScreen();
-                }
-                if (!data.scoreProcessed) {
-                    processLoss();
-                    update(ref(db, `daily/${currentDayStr}`), { scoreProcessed: true });
-                }
-            }
+        if (!data.scoreProcessed) {
+            processLoss();
+            update(ref(db, `daily/${currentDayStr}`), { scoreProcessed: true });
         }
     }
 }
-
-// Rescue Submit
-btnRescue.addEventListener('click', () => {
-    const val = rescueInput.value.trim();
-    if (!val) return;
-
-    rescueInput.disabled = true;
-    btnRescue.disabled = true;
-    playSound('stamp');
-
-    updateWithTimeout(ref(db, `daily/${currentDayStr}/rescue`), {
-        [currentUserRole]: val
-    }).catch(err => handleFirebaseError(err, () => {
-        rescueInput.disabled = false;
-        btnRescue.disabled = false;
-    }));
-});
-
-// Alibi Override
-btnAlibiOverride.addEventListener('click', () => {
-    btnAlibiOverride.disabled = true;
-    playSound('stamp');
-    speak("Das war haarscharf am Gefängnis vorbei!", 5000);
-
-    updateWithTimeout(ref(db, `daily/${currentDayStr}`), { overrideSuccess: true })
-        .catch(err => handleFirebaseError(err, () => {
-            btnAlibiOverride.disabled = false;
-        }));
-});
 
 // --- STREAK & RANKS ---
 async function loadStats() {
