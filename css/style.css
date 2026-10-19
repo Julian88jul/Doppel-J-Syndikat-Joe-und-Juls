@@ -1819,3 +1819,23 @@ body.panic-mode .vignette {
 .reset-start:hover { border-color: var(--amber); }
 .btn-new-case { width: 100%; margin-top: 14px; min-height: 44px; font-size: 1.05rem; }
 #screen-role-select { padding-bottom: 16px; }
+
+/* Neustart auf der Rollenwahl: kleines, dezentes Etikett statt großem Kasten */
+.reset-start {
+    display: block;
+    width: auto;
+    margin: 14px auto 0;
+    padding: 5px 14px;
+    font-size: 0.74rem;
+    letter-spacing: 0.5px;
+    color: #b9a97f;
+    background: transparent;
+    border: 1px solid rgba(185, 169, 127, 0.4);
+    border-radius: 999px;
+    opacity: 0.8;
+    transition: opacity 0.15s, border-color 0.15s, color 0.15s;
+}
+.reset-start:hover, .reset-start:active { opacity: 1; color: var(--amber); border-color: var(--amber); }
+.build-info { margin-top: 8px; }
+.reset-start { background: rgba(12, 10, 8, 0.88); position: relative; z-index: 2; }
+.build-info { position: relative; z-index: 2; text-shadow: 0 1px 3px #000; }
