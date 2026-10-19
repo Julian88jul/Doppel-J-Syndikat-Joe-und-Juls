@@ -1800,3 +1800,22 @@ body.panic-mode .vignette {
 .police-file { overflow-x: hidden; }
 
 .new-game-btn { display: block; width: 100%; margin-top: 14px; padding: 12px; font-size: 1rem; }
+
+/* Version/Modus-Anzeige und Neustart-Knöpfe */
+.build-info { margin-top: 12px; font-size: 0.68rem; color: #8d7f69; text-align: center; opacity: 0.85; }
+.reset-start {
+    display: block;
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px 10px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.95rem;
+    color: var(--amber);
+    background: rgba(12, 10, 8, 0.85);
+    border: 1px dashed #7a6a4a;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.reset-start:hover { border-color: var(--amber); }
+.btn-new-case { width: 100%; margin-top: 14px; min-height: 44px; font-size: 1.05rem; }
+#screen-role-select { padding-bottom: 16px; }

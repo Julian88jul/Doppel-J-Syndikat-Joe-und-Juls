@@ -1,4 +1,8 @@
-import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js';
+import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261019b';
+
+// Versionsanzeige: so sieht man auf dem Handy sofort, ob die neue Version geladen wurde und in welchem Modus gespielt wird
+const APP_BUILD = '20261019b';
+const MODE_LABELS = { firebase: 'Firebase (online)', server: 'Test-Server (WLAN)', local: 'nur dieses Gerät' };
 
 // --- CONFIG & STATE ---
 const PIN_CODE = "1337"; // Example PIN
@@ -226,10 +230,17 @@ function init() {
         input.addEventListener('input', () => playSound('typewriter'));
     });
 
+    document.querySelectorAll('.build-info').forEach(el => {
+        el.textContent = `Version ${APP_BUILD} · Modus: ${MODE_LABELS[syncMode] || syncMode}`;
+    });
+
     if (isLocalMode) {
-        const resetBtn = document.getElementById('reset-btn');
-        resetBtn.classList.remove('hidden');
-        resetBtn.addEventListener('click', restartToday);
+        // Neustart-Knöpfe: Kopfzeile im Spiel und gut sichtbar schon auf der Rollenwahl
+        ['reset-btn', 'reset-start'].forEach(id => {
+            const btn = document.getElementById(id);
+            btn.classList.remove('hidden');
+            btn.addEventListener('click', restartToday);
+        });
 
         const banner = document.createElement('div');
         banner.className = 'local-banner';
