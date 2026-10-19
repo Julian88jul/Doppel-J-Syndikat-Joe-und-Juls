@@ -1798,3 +1798,5 @@ body.panic-mode .vignette {
 }
 /* Keine horizontale Scrollleiste in der Akte */
 .police-file { overflow-x: hidden; }
+
+.new-game-btn { display: block; width: 100%; margin-top: 14px; padding: 12px; font-size: 1rem; }

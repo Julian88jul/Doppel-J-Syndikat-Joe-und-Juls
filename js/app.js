@@ -229,12 +229,7 @@ function init() {
     if (isLocalMode) {
         const resetBtn = document.getElementById('reset-btn');
         resetBtn.classList.remove('hidden');
-        resetBtn.addEventListener('click', async () => {
-            // Nur den heutigen Spieltag löschen; Fälle und Streak bleiben erhalten.
-            // Im Server-Modus gilt das für alle Geräte, die anderen laden sich dann von selbst neu.
-            try { await set(ref(db, `daily/${currentDayStr}`), null); } catch (e) {}
-            location.reload();
-        });
+        resetBtn.addEventListener('click', restartToday);
 
         const banner = document.createElement('div');
         banner.className = 'local-banner';
@@ -1209,6 +1204,34 @@ function renderPanicLog(data) {
     // Neues Wort vom Partner: kurzer Ton
     const newest = log[log.length - 1];
     if (log.length > known && newest && newest[1].role !== currentUserRole) playSound('pop');
+
+    // Die Detektive haken nach, wenn beide ein Wort haben, die Wörter aber nicht zusammenpassen
+    // (beim ersten Laden der Seite nicht, sonst würden alte Wörter erneut kommentiert)
+    if (panicLogSeen !== null && log.length > panicLogSeen) doubtIfMismatch(data);
+    panicLogSeen = log.length;
+}
+
+let panicLogSeen = null;
+let lastDoubtAt = 0;
+let lastDoubtIndex = -1;
+const DOUBT_LINES = [
+    "Das hat so nicht ganz gestimmt. Sind Sie sich sicher?",
+    "Hmm. Zwei verschiedene Wörter. Sind Sie sich da wirklich sicher?",
+    "Das klingt nicht nach derselben Geschichte. Überlegen Sie noch einmal.",
+    "Ihre Wörter passen nicht zusammen. Sicher, dass Sie die Wahrheit sagen?",
+    "Aha. Der eine sagt so, der andere so. Sind Sie sich sicher?"
+];
+function doubtIfMismatch(data) {
+    const a = normalizeAnswer(lastWord(data, 'Juls'));
+    const b = normalizeAnswer(lastWord(data, 'Joe'));
+    if (!a || !b || a === b) return;                         // noch kein Vergleich möglich oder schon gleich
+    if (data.result) return;                                  // Spiel ist vorbei
+    if (Date.now() - lastDoubtAt < 6000) return;              // nicht bei jedem Wort, sonst nervt es
+    lastDoubtAt = Date.now();
+    let idx;
+    do { idx = Math.floor(Math.random() * DOUBT_LINES.length); } while (idx === lastDoubtIndex && DOUBT_LINES.length > 1);
+    lastDoubtIndex = idx;
+    speak(DOUBT_LINES[idx], 3500);
 }
 
 function panicTick() {
@@ -1266,6 +1289,22 @@ btnPanicSend.addEventListener('click', () => {
     ]).catch(err => console.warn('Wort konnte nicht gesendet werden', err));
 });
 
+async function restartToday() {
+    // Nur den heutigen Spieltag löschen; Fälle und Streak bleiben erhalten.
+    // Im Server-Modus gilt das für alle Geräte, die anderen laden sich dann von selbst neu.
+    try { await set(ref(db, `daily/${currentDayStr}`), null); } catch (e) {}
+    location.reload();
+}
+
+// Großer Knopf unter dem Ergebnis (der kleine in der Kopfzeile ist am Handy schwer zu treffen)
+function addNewGameButton() {
+    const btn = document.createElement('button');
+    btn.className = 'btn-typewriter new-game-btn';
+    btn.textContent = '↺ Neues Verhör starten';
+    btn.addEventListener('click', restartToday);
+    finalVerdict.appendChild(btn);
+}
+
 function finishGame(data, won, how) {
     stopPanic();
     panicSection.classList.toggle('hidden', how !== 'panic');
@@ -1274,6 +1313,7 @@ function finishGame(data, won, how) {
     if (won) {
         titleEl.innerText = how === 'alibi' ? 'Das Alibi ist wasserdicht!' : 'Gerade noch mal davongekommen!';
         finalVerdict.innerHTML = "<h2 style='color: green;'>FREIHEIT! Das Doppel-J-Syndikat ist frei.</h2>";
+        addNewGameButton();
         if (autoShown.final !== 'win') {
             autoShown.final = 'win';
             playSound('win');
@@ -1289,6 +1329,7 @@ function finishGame(data, won, how) {
     } else {
         titleEl.innerText = 'Die Minute ist um!';
         finalVerdict.innerHTML = "<h2 style='color: red;'>VERHAFTET! Ab in den Knast.</h2>";
+        addNewGameButton();
         if (autoShown.final !== 'lose') {
             autoShown.final = 'lose';
             playSound('lose');
