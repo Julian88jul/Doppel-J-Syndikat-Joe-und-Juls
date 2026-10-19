@@ -135,87 +135,91 @@
                                 <svg viewBox="0 0 220 300" class="det-svg" aria-label="Detektiv Schatten">
                                     <defs>
                                         <linearGradient id="sSuit" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0" stop-color="#2f3a4d"/>
-                                            <stop offset="0.45" stop-color="#171d29"/>
-                                            <stop offset="1" stop-color="#06080c"/>
+                                            <stop offset="0" stop-color="#202632"/>
+                                            <stop offset="0.5" stop-color="#0f1218"/>
+                                            <stop offset="1" stop-color="#040406"/>
                                         </linearGradient>
-                                        <radialGradient id="sSkin" cx="0.5" cy="0.35" r="0.75">
-                                            <stop offset="0" stop-color="#d9b59a"/>
-                                            <stop offset="0.6" stop-color="#a47f66"/>
-                                            <stop offset="1" stop-color="#5c4132"/>
+                                        <radialGradient id="sSkin" cx="0.5" cy="0.3" r="0.8">
+                                            <stop offset="0" stop-color="#d9cfc2"/>
+                                            <stop offset="0.55" stop-color="#968b7f"/>
+                                            <stop offset="1" stop-color="#3a332e"/>
                                         </radialGradient>
-                                        <linearGradient id="sHair" x1="0" y1="0" x2="1" y2="1">
-                                            <stop offset="0" stop-color="#4a3a2c"/>
-                                            <stop offset="1" stop-color="#150f0a"/>
-                                        </linearGradient>
+                                        <radialGradient id="sHollow" cx="0.5" cy="0.5" r="0.5">
+                                            <stop offset="0" stop-color="#1c1814" stop-opacity="0.5"/>
+                                            <stop offset="1" stop-color="#1c1814" stop-opacity="0"/>
+                                        </radialGradient>
+                                        <radialGradient id="sBag" cx="0.5" cy="0.5" r="0.5">
+                                            <stop offset="0" stop-color="#2a2030" stop-opacity="0.9"/>
+                                            <stop offset="1" stop-color="#2a2030" stop-opacity="0"/>
+                                        </radialGradient>
                                         <clipPath id="sLensClip">
-                                            <rect x="82" y="104" width="26" height="20" rx="6"/>
-                                            <rect x="114" y="104" width="26" height="20" rx="6"/>
+                                            <circle cx="96" cy="113" r="12"/>
+                                            <circle cx="126" cy="113" r="12"/>
                                         </clipPath>
                                     </defs>
-                                    <!-- Schultern: breit genug, schlanker Anzug -->
-                                    <path d="M14 300 C 20 232, 58 204, 111 198 C 164 204, 202 232, 208 300 Z" fill="url(#sSuit)" stroke="rgba(190,215,255,0.25)" stroke-width="1.5"/>
-                                    <!-- Hemd, Weste, Krawatte -->
-                                    <path d="M92 200 L111 250 L130 200 Z" fill="#e8e4da"/>
-                                    <path d="M92 206 L111 296 L130 206 L121 204 L111 226 L101 204 Z" fill="#2a3550" opacity="0.9"/>
-                                    <path d="M106 214 L116 214 L119 262 L111 272 L103 262 Z" fill="#7a1f2a"/>
-                                    <path d="M106 207 L116 207 L113 215 L109 215 Z" fill="#5f1822"/>
-                                    <!-- Revers -->
-                                    <path d="M70 212 L108 270 L90 200 Z" fill="#202938" stroke="rgba(190,215,255,0.2)"/>
-                                    <path d="M152 212 L114 270 L132 200 Z" fill="#1c2431" stroke="rgba(190,215,255,0.15)"/>
-                                    <!-- Einstecktuch -->
-                                    <path d="M150 238 L166 234 L162 248 Z" fill="#c9d3df" opacity="0.8"/>
-                                    <!-- Hals + Hemdkragen -->
-                                    <rect x="98" y="170" width="26" height="32" rx="6" fill="#8f6b54"/>
-                                    <path d="M92 196 L106 206 L111 192 L116 206 L130 196 L124 188 L98 188 Z" fill="#f0ece0"/>
+                                    <!-- Schmale, leicht hängende Schultern -->
+                                    <path d="M22 300 C 26 238, 60 212, 111 206 C 162 212, 196 238, 200 300 Z" fill="url(#sSuit)" stroke="rgba(170,200,230,0.22)" stroke-width="1.5"/>
+                                    <!-- Hemd und dünne Krawatte -->
+                                    <path d="M95 206 L111 254 L127 206 Z" fill="#d9d5c6" opacity="0.9"/>
+                                    <path d="M108 212 L114 212 L116 276 L111 284 L106 276 Z" fill="#3a1118"/>
+                                    <!-- Etwas zu weiter Kragen -->
+                                    <path d="M88 196 L101 212 L111 199 L121 212 L134 196 L127 188 L95 188 Z" fill="#e6e2d4"/>
+                                    <!-- Schlanker Hals -->
+                                    <path d="M100 168 L99 198 C 105 204, 117 204, 123 198 L122 168 Z" fill="#8d7866"/>
+                                    <path d="M100 168 L122 168 L122 178 C 114 182, 108 182, 100 178 Z" fill="#3b2c22" opacity="0.4"/>
                                     <g class="det-head">
                                         <!-- Ohren -->
-                                        <ellipse cx="73" cy="124" rx="7" ry="11" fill="#9a7761"/>
-                                        <ellipse cx="149" cy="124" rx="7" ry="11" fill="#8d6b56"/>
-                                        <!-- Gesicht mit Kinn und Wangen -->
-                                        <path d="M76 112 C 75 78, 147 78, 146 112 C 147 144, 134 176, 111 184 C 88 176, 75 144, 76 112 Z" fill="url(#sSkin)" stroke="rgba(60,35,20,0.5)" stroke-width="1.2"/>
-                                        <!-- Wangenrot und Kinn-Schatten -->
-                                        <ellipse cx="90" cy="140" rx="9" ry="5" fill="#c98a78" opacity="0.35"/>
-                                        <ellipse cx="132" cy="140" rx="9" ry="5" fill="#c98a78" opacity="0.35"/>
-                                        <path d="M92 166 C 104 182, 118 182, 130 166" fill="none" stroke="#5c4132" stroke-opacity="0.35" stroke-width="6"/>
-                                        <!-- Haartolle -->
-                                        <path d="M72 108 C 64 62, 96 40, 126 46 C 152 52, 160 80, 150 108 C 146 90, 136 78, 122 74 C 104 70, 84 80, 72 108 Z" fill="url(#sHair)"/>
-                                        <path d="M86 62 C 100 50, 124 50, 140 64" fill="none" stroke="rgba(255,235,210,0.35)" stroke-width="2.4" stroke-linecap="round"/>
-                                        <path d="M98 52 C 96 62, 100 70, 108 74" fill="none" stroke="#0a0604" stroke-width="1.5"/>
-                                        <!-- Koteletten -->
-                                        <path d="M76 108 L80 126 L83 108 Z" fill="#1c140d"/>
-                                        <path d="M146 108 L142 126 L139 108 Z" fill="#1c140d"/>
-                                        <!-- Augenbrauen: links hoch (skeptisch) -->
-                                        <path d="M84 98 C 92 91, 102 92, 108 97" fill="none" stroke="#2a1b10" stroke-width="3.2" stroke-linecap="round"/>
-                                        <path d="M114 100 C 120 98, 130 98, 138 101" fill="none" stroke="#2a1b10" stroke-width="3.2" stroke-linecap="round"/>
-                                        <!-- Augen -->
+                                        <ellipse cx="76" cy="122" rx="6" ry="10" fill="#a58f7c"/>
+                                        <ellipse cx="146" cy="122" rx="6" ry="10" fill="#9a8573"/>
+                                        <!-- Schmales, langes Gesicht mit markantem Kinn -->
+                                        <path d="M79 108 C 78 68, 144 68, 143 108 C 144 132, 138 150, 131 164 C 126 178, 119 188, 111 190 C 103 188, 96 178, 91 164 C 84 150, 78 132, 79 108 Z" fill="url(#sSkin)" stroke="rgba(50,32,22,0.55)" stroke-width="1.3"/>
+                                        <!-- Eingefallene Wangen (dezent) -->
+                                        <ellipse cx="95" cy="150" rx="8" ry="17" fill="url(#sHollow)"/>
+                                        <ellipse cx="127" cy="150" rx="8" ry="17" fill="url(#sHollow)"/>
+                                        <path d="M84 126 C 90 126, 95 130, 99 136" fill="none" stroke="#f0e2d2" stroke-opacity="0.35" stroke-width="2.4" stroke-linecap="round"/>
+                                        <path d="M138 126 C 132 126, 127 130, 123 136" fill="none" stroke="#f0e2d2" stroke-opacity="0.25" stroke-width="2.4" stroke-linecap="round"/>
+                                        <!-- Zurückgekämmtes dunkles Haar mit Haaransatz -->
+                                        <path d="M79 100 C 76 70, 98 60, 118 62 C 136 64, 146 76, 143 100 C 138 84, 126 76, 111 76 C 96 76, 84 86, 79 100 Z" fill="#14100c"/>
+                                        <path d="M88 76 C 102 66, 122 66, 135 78 M95 72 C 108 67, 118 69, 126 73" fill="none" stroke="#4a4036" stroke-width="1.3"/>
+                                        <!-- Augenringe -->
+                                        <ellipse cx="96" cy="119" rx="12" ry="6" fill="url(#sBag)"/>
+                                        <ellipse cx="126" cy="119" rx="12" ry="6" fill="url(#sBag)"/>
+                                        <!-- Augen: müde, wachsam -->
                                         <g class="det-eyes">
-                                            <ellipse cx="95" cy="114" rx="8" ry="5" fill="#f4efe6"/>
-                                            <ellipse cx="127" cy="114" rx="8" ry="5" fill="#f4efe6"/>
-                                            <circle cx="97" cy="114" r="3.6" fill="#2b5f7a"/>
-                                            <circle cx="129" cy="114" r="3.6" fill="#2b5f7a"/>
-                                            <circle cx="97" cy="114" r="1.7" fill="#05080a"/>
-                                            <circle cx="129" cy="114" r="1.7" fill="#05080a"/>
-                                            <circle cx="98.4" cy="112.6" r="1" fill="#fff"/>
-                                            <circle cx="130.4" cy="112.6" r="1" fill="#fff"/>
-                                            <!-- schwere Lider -->
-                                            <path d="M87 111 C 92 107, 100 107, 103 111" fill="none" stroke="#3a2518" stroke-width="2"/>
-                                            <path d="M119 111 C 124 107, 132 107, 135 111" fill="none" stroke="#3a2518" stroke-width="2"/>
+                                            <path d="M87 113 C 91 107, 101 107, 105 113 C 101 118, 91 118, 87 113 Z" fill="#ece7dc"/>
+                                            <path d="M117 113 C 121 107, 131 107, 135 113 C 131 118, 121 118, 117 113 Z" fill="#ece7dc"/>
+                                            <circle cx="97" cy="113" r="4.2" fill="#8fc4d8"/>
+                                            <circle cx="127" cy="113" r="4.2" fill="#8fc4d8"/>
+                                            <circle cx="97" cy="113" r="1.9" fill="#04080a"/>
+                                            <circle cx="127" cy="113" r="1.9" fill="#04080a"/>
+                                            <circle cx="98.3" cy="111.7" r="1" fill="#fff"/>
+                                            <circle cx="128.3" cy="111.7" r="1" fill="#fff"/>
+                                            <!-- schwere obere Lider -->
+                                            <path d="M86 112 C 91 105, 101 105, 106 112" fill="none" stroke="#2a1b12" stroke-width="2.2"/>
+                                            <path d="M116 112 C 121 105, 131 105, 136 112" fill="none" stroke="#2a1b12" stroke-width="2.2"/>
                                         </g>
-                                        <!-- Eckige Brille -->
-                                        <rect x="82" y="104" width="26" height="20" rx="6" fill="rgba(190,230,255,0.12)" stroke="#161b22" stroke-width="3"/>
-                                        <rect x="114" y="104" width="26" height="20" rx="6" fill="rgba(190,230,255,0.12)" stroke="#161b22" stroke-width="3"/>
-                                        <path d="M108 112 L114 112" stroke="#161b22" stroke-width="3"/>
-                                        <path d="M82 110 L74 108 M140 110 L148 108" stroke="#161b22" stroke-width="2.6"/>
-                                        <!-- Lichtreflex auf den Gläsern -->
+                                        <!-- Buschige Brauen, linke skeptisch hochgezogen -->
+                                        <path d="M84 99 C 92 92, 103 93, 108 99" fill="none" stroke="#1c140d" stroke-width="3.6" stroke-linecap="round"/>
+                                        <path d="M114 100 C 120 98, 132 98, 139 101" fill="none" stroke="#1c140d" stroke-width="3.6" stroke-linecap="round"/>
+                                        <!-- Dünne runde Brille -->
+                                        <circle cx="96" cy="113" r="12" fill="rgba(190,225,245,0.10)" stroke="#9aa3ab" stroke-width="1.8"/>
+                                        <circle cx="126" cy="113" r="12" fill="rgba(190,225,245,0.10)" stroke="#9aa3ab" stroke-width="1.8"/>
+                                        <path d="M108 112 C 111 109, 111 109, 114 112" fill="none" stroke="#9aa3ab" stroke-width="1.8"/>
+                                        <path d="M84 111 L78 110 M138 111 L144 110" stroke="#9aa3ab" stroke-width="1.6"/>
                                         <g clip-path="url(#sLensClip)">
-                                            <rect class="det-glint" x="70" y="96" width="7" height="44" fill="rgba(255,255,255,0.85)" transform="rotate(22 96 114)"/>
+                                            <rect class="det-glint" x="72" y="92" width="6" height="46" fill="rgba(255,255,255,0.8)" transform="rotate(22 96 113)"/>
                                         </g>
-                                        <!-- Nase -->
-                                        <path d="M111 118 C 108 132, 106 138, 112 141 C 117 139, 118 134, 115 128" fill="none" stroke="#6b4a37" stroke-width="2.2" stroke-linecap="round"/>
-                                        <!-- Mund: Grinsen mit einem hochgezogenen Mundwinkel -->
-                                        <path class="det-mouth" d="M97 158 C 106 164, 118 164, 127 155" fill="#3a1410" stroke="#2a0d0a" stroke-width="2.4" stroke-linecap="round"/>
-                                        <path d="M126 154 C 128 152, 130 152, 131 154" fill="none" stroke="#6b4a37" stroke-width="2" stroke-linecap="round"/>
+                                        <!-- Nase: schmal -->
+                                        <path d="M111 120 C 109 130, 106 138, 108 142 C 111 145, 115 145, 117 142" fill="none" stroke="#6e5646" stroke-width="2.2" stroke-linecap="round"/>
+                                        <path d="M108 142 C 109 144, 111 144.5, 112 143" fill="none" stroke="#3b2a20" stroke-width="1.4" opacity="0.6"/>
+                                        <!-- Mund: schmale Lippen, schiefes, kaltes Lächeln -->
+                                        <g class="det-mouth">
+                                            <path d="M98 161 C 106 164, 118 163, 127 157 C 119 160, 106 161, 98 161 Z" fill="#35120f"/>
+                                            <path d="M98 161 C 106 164, 118 163, 127 157" fill="none" stroke="#7a4a40" stroke-width="2" stroke-linecap="round"/>
+                                        </g>
+                                        <path d="M127 156 C 129 154, 131 154, 132 156" fill="none" stroke="#6e5646" stroke-width="1.8" stroke-linecap="round"/>
+                                        <!-- Kinn-Schatten -->
+                                        <path d="M100 178 C 106 184, 116 184, 122 178" fill="none" stroke="#3b2a20" stroke-opacity="0.35" stroke-width="3"/>
                                     </g>
                                 </svg>
                                 <div class="det-nameplate">D. Schatten</div>

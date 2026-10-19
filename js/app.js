@@ -1,4 +1,4 @@
-import { db, ref, set, get, onValue, update, isLocalMode } from './firebase-config.js';
+import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js';
 
 // --- CONFIG & STATE ---
 const PIN_CODE = "1337"; // Example PIN
@@ -215,20 +215,18 @@ function init() {
     if (isLocalMode) {
         const resetBtn = document.getElementById('reset-btn');
         resetBtn.classList.remove('hidden');
-        resetBtn.addEventListener('click', () => {
-            // Nur heutige Spieldaten löschen; Fälle und Streak bleiben erhalten
-            const key = 'djs_local_db';
-            try {
-                const dbData = JSON.parse(localStorage.getItem(key)) || {};
-                if (dbData.daily) delete dbData.daily[currentDayStr];
-                localStorage.setItem(key, JSON.stringify(dbData));
-            } catch (e) {}
+        resetBtn.addEventListener('click', async () => {
+            // Nur den heutigen Spieltag löschen; Fälle und Streak bleiben erhalten.
+            // Im Server-Modus gilt das für alle Geräte, die anderen laden sich dann von selbst neu.
+            try { await set(ref(db, `daily/${currentDayStr}`), null); } catch (e) {}
             location.reload();
         });
 
         const banner = document.createElement('div');
         banner.className = 'local-banner';
-        banner.innerText = 'Lokaler Modus: Firebase ist nicht eingerichtet, Spielstände bleiben in diesem Browser.';
+        banner.innerText = syncMode === 'server'
+            ? 'Test-Server: Spielstand wird mit allen Geräten im WLAN geteilt.'
+            : 'Lokaler Modus: Firebase ist nicht eingerichtet, Spielstand bleibt nur in diesem Browser.';
         banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:4px 8px;font-size:12px;text-align:center;background:#222;color:#e0c97f;opacity:.85;pointer-events:none;';
         document.body.appendChild(banner);
     }
@@ -680,8 +678,13 @@ function setupStage2Roles() {
 
 function listenToGameState() {
     const dailyRef = ref(db, `daily/${currentDayStr}`);
+    let hadData = false;
     onValue(dailyRef, (snapshot) => {
         const data = snapshot.val() || {};
+        const hasData = Object.keys(data).length > 0;
+        // Wurde der Tag auf einem anderen Gerät zurückgesetzt, hier ebenfalls neu starten
+        if (hadData && !hasData) { location.reload(); return; }
+        if (hasData) hadData = true;
         updateUIBasedOnState(data);
     });
 }
@@ -764,17 +767,8 @@ function guideToStage(data) {
     const isSetter = currentUserRole === setterRole;
     const bothS1 = data.stage1 && data.stage1.Juls && data.stage1.Joe;
 
-    // Setter soll sofort den Kassiber schreiben, Rater soll ihn sofort sehen
-    if (bothS1 && !(data.stage2 && data.stage2.word) && isSetter && !autoShown.write) {
-        autoShown.write = true;
-        openFileModal.classList.add('hidden');
-        scrapModal.classList.remove('hidden');
-    }
-    if (data.stage2 && data.stage2.word && !data.stage2.guess && !isSetter && !autoShown.read) {
-        autoShown.read = true;
-        openFileModal.classList.add('hidden');
-        scrapModal.classList.remove('hidden');
-    }
+    // Die Notiz poppt nicht von selbst auf: Der Spieler öffnet sie über den pulsierenden Notiz-Button
+    // oder indem er unter dem Tisch auf den Zettel tippt.
 
     let target = stage1;
     if (bothS1) target = stage2;
@@ -908,7 +902,13 @@ function updateUIBasedOnState(data) {
             if (!data.stage3 || (!data.stage3.Juls || !data.stage3.Joe)) {
                 const clueEl = document.getElementById('clue-text');
                 if (clueEl) clueEl.innerText = activeCase.clue ? `🔍 Neues Indiz: ${activeCase.clue}` : '';
-                sayOnce('s3intro', `So, da sind wir wieder. Wir haben etwas gefunden: ${activeCase.clue} Jetzt die finale Frage, getrennt voneinander: ${activeCase.q3}`, 8000, activeCase.speaker);
+                // Die Detektive kommen zurück und vergleichen das Alibi aus der Notiz
+                const alibiHolds = data.stage2.word && normalizeAnswer(data.stage2.guess) === normalizeAnswer(data.stage2.word);
+                const alibiLine = alibiHolds
+                    ? "Euer Alibi deckt sich. Verdächtig gut. "
+                    : "Euer Alibi hat Lücken. Das gefällt mir. ";
+                sayOnce('s3intro', `So, da sind wir wieder. ${alibiLine}Und wir haben etwas gefunden: ${activeCase.clue} Jetzt die finale Frage, getrennt voneinander: ${activeCase.q3}`, 10000, activeCase.speaker);
+                if (alibiHolds && !spoken.s3win) { spoken.s3win = true; playSound('win'); }
             }
         }
     }

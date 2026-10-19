@@ -78,6 +78,62 @@ function createLocalApi() {
     };
 }
 
+// --- Gemeinsamer Spielstand über server.py (WLAN-Test ohne Firebase) ---
+function createServerApi() {
+    const snapshot = (val) => ({
+        exists: () => val !== null && val !== undefined,
+        val: () => (val === null || val === undefined ? null : JSON.parse(JSON.stringify(val)))
+    });
+    const read = async (path) => {
+        const res = await fetch(`/api/db?path=${encodeURIComponent(path)}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Server ${res.status}`);
+        return (await res.json()).value;
+    };
+    const write = async (op, path, value) => {
+        const res = await fetch('/api/db', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ op, path, value })
+        });
+        if (!res.ok) throw new Error(`Server ${res.status}`);
+    };
+    return {
+        db: {},
+        ref: (db, path = '') => ({ path }),
+        get: async (r) => snapshot(await read(r.path)),
+        set: (r, value) => write('set', r.path, value),
+        update: (r, values) => write('update', r.path, values),
+        // Der Server kennt keine Push-Nachrichten, deshalb jede Sekunde nachsehen und nur bei Änderung melden
+        onValue: (r, cb) => {
+            let last;
+            let stopped = false;
+            const tick = async () => {
+                if (stopped) return;
+                try {
+                    const val = await read(r.path);
+                    const text = JSON.stringify(val === undefined ? null : val);
+                    if (text !== last) { last = text; cb(snapshot(val)); }
+                } catch (e) { /* kurzer Verbindungsabbruch: nächste Runde */ }
+            };
+            tick();
+            const id = setInterval(tick, 1000);
+            return () => { stopped = true; clearInterval(id); };
+        }
+    };
+}
+
+async function serverIsAvailable() {
+    try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 1500);
+        const res = await fetch('/api/ping', { cache: 'no-store', signal: ctl.signal });
+        clearTimeout(timer);
+        return res.ok && (await res.json()).ok === true;
+    } catch (e) {
+        return false;
+    }
+}
+
 async function createFirebaseApi() {
     const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
     const [appMod, dbMod] = await Promise.all([
@@ -95,17 +151,23 @@ async function createFirebaseApi() {
     };
 }
 
+// Reihenfolge: echtes Firebase, sonst gemeinsamer Test-Server (server.py), sonst nur dieser Browser
 let api;
-let offlineMode = true;
+let mode = 'local';
 if (!isPlaceholder) {
     try {
         api = await createFirebaseApi();
-        offlineMode = false;
+        mode = 'firebase';
     } catch (e) {
-        console.error("Firebase konnte nicht geladen werden, nutze lokalen Modus.", e);
+        console.error("Firebase konnte nicht geladen werden.", e);
     }
+}
+if (!api && await serverIsAvailable()) {
+    api = createServerApi();
+    mode = 'server';
 }
 if (!api) api = createLocalApi();
 
 export const { db, ref, set, get, onValue, update } = api;
-export const isLocalMode = offlineMode;
+export const syncMode = mode;                 // 'firebase' | 'server' | 'local'
+export const isLocalMode = mode !== 'firebase'; // true = kein echtes Firebase
