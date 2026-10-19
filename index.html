@@ -12,6 +12,9 @@
     <!-- Sounds (Mute Toggle) -->
     <button id="mute-btn" class="mute-btn" title="Ton umschalten">🔊</button>
     <button id="hidden-smuggle-btn" class="hidden-btn" title="Neue Akte schmuggeln"></button>
+    <button id="look-btn" class="look-btn hidden" title="Unter den Tisch schauen">👇 Unter den Tisch</button>
+    <div class="film-grain"></div>
+    <div class="vignette"></div>
 
     <div class="room-container">
 
@@ -25,6 +28,24 @@
                         <!-- Cabinet shape in the dark -->
                         <div class="cabinet-shadow"></div>
 
+                        <!-- Einwegspiegel: wer steht wohl dahinter? -->
+                        <div class="one-way-mirror"><div class="mirror-sheen"></div></div>
+
+                        <!-- Wanduhr -->
+                        <div class="wall-clock">
+                            <div class="clock-hand hour"></div>
+                            <div class="clock-hand minute"></div>
+                            <div class="clock-hand second"></div>
+                            <div class="clock-pin"></div>
+                        </div>
+
+                        <!-- Steckbrief an der Wand -->
+                        <div class="wanted-poster">
+                            <div class="wp-title">GESUCHT</div>
+                            <div class="wp-face">JJ</div>
+                            <div class="wp-sub">Doppel-J-Syndikat</div>
+                        </div>
+
                         <div class="lamp-container">
                             <div class="lamp-wire"></div>
                             <div class="lamp-bulb"></div>
@@ -32,23 +53,183 @@
                         </div>
 
                         <div class="detectives-bg">
+                            <!-- KOMMISSAR GRIMM: bullig, Hut, Trenchcoat, Schnurrbart, Zigarette -->
                             <div class="detective grimm">
-                                <div class="glowing-eyes"></div>
-                                <div class="cigarette">
-                                    <div class="cigarette-tip"></div>
-                                    <div class="smoke-particle p1"></div>
-                                    <div class="smoke-particle p2"></div>
-                                    <div class="smoke-particle p3"></div>
-                                </div>
+                                <svg viewBox="0 0 220 300" class="det-svg" aria-label="Kommissar Grimm">
+                                    <defs>
+                                        <linearGradient id="gCoat" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#3a2c20"/>
+                                            <stop offset="0.35" stop-color="#1c150f"/>
+                                            <stop offset="1" stop-color="#070504"/>
+                                        </linearGradient>
+                                        <radialGradient id="gSkin" cx="0.45" cy="0.2" r="0.85">
+                                            <stop offset="0" stop-color="#6b4a35"/>
+                                            <stop offset="0.5" stop-color="#3a2619"/>
+                                            <stop offset="1" stop-color="#140c07"/>
+                                        </radialGradient>
+                                        <linearGradient id="gHat" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#3d342b"/>
+                                            <stop offset="1" stop-color="#0d0b09"/>
+                                        </linearGradient>
+                                        <filter id="gGlow" x="-200%" y="-200%" width="500%" height="500%">
+                                            <feGaussianBlur stdDeviation="2.2" result="b"/>
+                                            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                        </filter>
+                                    </defs>
+                                    <!-- Mantel mit breiten Schultern -->
+                                    <path d="M4 300 C 8 228, 44 198, 110 192 C 176 198, 212 228, 216 300 Z" fill="url(#gCoat)" stroke="rgba(255,215,150,0.22)" stroke-width="1.5"/>
+                                    <!-- Hemd & Krawatte -->
+                                    <path d="M92 196 L110 236 L128 196 Z" fill="#cfc4ae" opacity="0.55"/>
+                                    <path d="M106 206 L114 206 L119 262 L110 274 L101 262 Z" fill="#5e1712"/>
+                                    <!-- Hochgeschlagener Kragen -->
+                                    <path d="M58 206 L108 256 L90 190 L66 186 Z" fill="#2a2018" stroke="rgba(255,215,150,0.18)"/>
+                                    <path d="M162 206 L112 256 L130 190 L154 186 Z" fill="#241b14" stroke="rgba(255,215,150,0.12)"/>
+                                    <!-- Dienstmarke -->
+                                    <polygon points="62,232 66,242 77,242 68,249 72,260 62,253 52,260 56,249 47,242 58,242" fill="#b8963e" opacity="0.85"/>
+                                    <!-- Hals -->
+                                    <rect x="92" y="168" width="36" height="30" rx="8" fill="#24170e"/>
+                                    <g class="det-head">
+                                        <!-- Kopf, breit mit Hängebacken -->
+                                        <path d="M64 120 C 62 82, 158 82, 156 120 C 158 150, 150 176, 110 182 C 70 176, 62 150, 64 120 Z" fill="url(#gSkin)" stroke="rgba(255,215,150,0.2)" stroke-width="1.2"/>
+                                        <!-- Ohren -->
+                                        <ellipse cx="62" cy="126" rx="7" ry="12" fill="#2b1b11"/>
+                                        <ellipse cx="158" cy="126" rx="7" ry="12" fill="#22150d"/>
+                                        <!-- Schatten der Hutkrempe über den Augen -->
+                                        <ellipse cx="110" cy="104" rx="50" ry="16" fill="#000" opacity="0.6"/>
+                                        <!-- Zornige Augenbrauen -->
+                                        <path d="M80 104 L102 110" stroke="#0a0604" stroke-width="5" stroke-linecap="round"/>
+                                        <path d="M140 104 L118 110" stroke="#0a0604" stroke-width="5" stroke-linecap="round"/>
+                                        <!-- Glühende Augen -->
+                                        <g class="det-eyes" filter="url(#gGlow)">
+                                            <ellipse cx="92" cy="114" rx="6" ry="2.6" fill="#ff4a2a"/>
+                                            <ellipse cx="128" cy="114" rx="6" ry="2.6" fill="#ff4a2a"/>
+                                        </g>
+                                        <!-- Knollennase -->
+                                        <path d="M104 118 C 100 134, 102 140, 110 141 C 118 140, 120 134, 116 118" fill="#4a3021" opacity="0.8"/>
+                                        <!-- Mund (bewegt sich beim Sprechen) -->
+                                        <ellipse class="det-mouth" cx="110" cy="158" rx="11" ry="1.6" fill="#0a0503"/>
+                                        <!-- Walross-Schnurrbart -->
+                                        <path d="M84 152 C 92 140, 104 142, 110 147 C 116 142, 128 140, 136 152 C 130 156, 120 152, 110 154 C 100 152, 90 156, 84 152 Z" fill="#17100b"/>
+                                        <!-- Bartstoppeln -->
+                                        <path d="M78 156 C 88 178, 132 178, 142 156" fill="none" stroke="#000" stroke-opacity="0.35" stroke-width="7" stroke-dasharray="1 3"/>
+                                        <!-- Zigarette im Mundwinkel -->
+                                        <g class="det-cig">
+                                            <rect x="124" y="153" width="30" height="4" rx="1.5" fill="#e9e2d2" transform="rotate(-14 124 155)"/>
+                                            <circle class="det-ember" cx="153" cy="148" r="2.6" fill="#ff5a28" filter="url(#gGlow)"/>
+                                            <circle class="det-smoke s1" cx="154" cy="140" r="5" fill="#bbb" opacity="0"/>
+                                            <circle class="det-smoke s2" cx="156" cy="140" r="6" fill="#bbb" opacity="0"/>
+                                            <circle class="det-smoke s3" cx="152" cy="140" r="4" fill="#bbb" opacity="0"/>
+                                        </g>
+                                        <!-- Fedora -->
+                                        <ellipse cx="110" cy="92" rx="82" ry="14" fill="url(#gHat)" stroke="rgba(255,215,150,0.25)" stroke-width="1.2"/>
+                                        <path d="M62 92 C 62 54, 80 38, 110 38 C 140 38, 158 54, 158 92 Z" fill="url(#gHat)" stroke="rgba(255,215,150,0.25)" stroke-width="1.2"/>
+                                        <path d="M86 42 C 98 52, 122 52, 134 42" fill="none" stroke="#0a0806" stroke-width="5"/>
+                                        <rect x="62" y="76" width="96" height="10" fill="#3b1812"/>
+                                    </g>
+                                </svg>
+                                <div class="det-nameplate">K. Grimm</div>
                             </div>
+
+                            <!-- DETEKTIV SCHATTEN: hager, Gelfrisur, runde Brille, Rollkragen -->
                             <div class="detective schatten">
-                                <div class="glowing-glasses"></div>
+                                <svg viewBox="0 0 220 300" class="det-svg" aria-label="Detektiv Schatten">
+                                    <defs>
+                                        <linearGradient id="sSuit" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#2f3a4d"/>
+                                            <stop offset="0.45" stop-color="#171d29"/>
+                                            <stop offset="1" stop-color="#06080c"/>
+                                        </linearGradient>
+                                        <radialGradient id="sSkin" cx="0.5" cy="0.35" r="0.75">
+                                            <stop offset="0" stop-color="#d9b59a"/>
+                                            <stop offset="0.6" stop-color="#a47f66"/>
+                                            <stop offset="1" stop-color="#5c4132"/>
+                                        </radialGradient>
+                                        <linearGradient id="sHair" x1="0" y1="0" x2="1" y2="1">
+                                            <stop offset="0" stop-color="#4a3a2c"/>
+                                            <stop offset="1" stop-color="#150f0a"/>
+                                        </linearGradient>
+                                        <clipPath id="sLensClip">
+                                            <rect x="82" y="104" width="26" height="20" rx="6"/>
+                                            <rect x="114" y="104" width="26" height="20" rx="6"/>
+                                        </clipPath>
+                                    </defs>
+                                    <!-- Schultern: breit genug, schlanker Anzug -->
+                                    <path d="M14 300 C 20 232, 58 204, 111 198 C 164 204, 202 232, 208 300 Z" fill="url(#sSuit)" stroke="rgba(190,215,255,0.25)" stroke-width="1.5"/>
+                                    <!-- Hemd, Weste, Krawatte -->
+                                    <path d="M92 200 L111 250 L130 200 Z" fill="#e8e4da"/>
+                                    <path d="M92 206 L111 296 L130 206 L121 204 L111 226 L101 204 Z" fill="#2a3550" opacity="0.9"/>
+                                    <path d="M106 214 L116 214 L119 262 L111 272 L103 262 Z" fill="#7a1f2a"/>
+                                    <path d="M106 207 L116 207 L113 215 L109 215 Z" fill="#5f1822"/>
+                                    <!-- Revers -->
+                                    <path d="M70 212 L108 270 L90 200 Z" fill="#202938" stroke="rgba(190,215,255,0.2)"/>
+                                    <path d="M152 212 L114 270 L132 200 Z" fill="#1c2431" stroke="rgba(190,215,255,0.15)"/>
+                                    <!-- Einstecktuch -->
+                                    <path d="M150 238 L166 234 L162 248 Z" fill="#c9d3df" opacity="0.8"/>
+                                    <!-- Hals + Hemdkragen -->
+                                    <rect x="98" y="170" width="26" height="32" rx="6" fill="#8f6b54"/>
+                                    <path d="M92 196 L106 206 L111 192 L116 206 L130 196 L124 188 L98 188 Z" fill="#f0ece0"/>
+                                    <g class="det-head">
+                                        <!-- Ohren -->
+                                        <ellipse cx="73" cy="124" rx="7" ry="11" fill="#9a7761"/>
+                                        <ellipse cx="149" cy="124" rx="7" ry="11" fill="#8d6b56"/>
+                                        <!-- Gesicht mit Kinn und Wangen -->
+                                        <path d="M76 112 C 75 78, 147 78, 146 112 C 147 144, 134 176, 111 184 C 88 176, 75 144, 76 112 Z" fill="url(#sSkin)" stroke="rgba(60,35,20,0.5)" stroke-width="1.2"/>
+                                        <!-- Wangenrot und Kinn-Schatten -->
+                                        <ellipse cx="90" cy="140" rx="9" ry="5" fill="#c98a78" opacity="0.35"/>
+                                        <ellipse cx="132" cy="140" rx="9" ry="5" fill="#c98a78" opacity="0.35"/>
+                                        <path d="M92 166 C 104 182, 118 182, 130 166" fill="none" stroke="#5c4132" stroke-opacity="0.35" stroke-width="6"/>
+                                        <!-- Haartolle -->
+                                        <path d="M72 108 C 64 62, 96 40, 126 46 C 152 52, 160 80, 150 108 C 146 90, 136 78, 122 74 C 104 70, 84 80, 72 108 Z" fill="url(#sHair)"/>
+                                        <path d="M86 62 C 100 50, 124 50, 140 64" fill="none" stroke="rgba(255,235,210,0.35)" stroke-width="2.4" stroke-linecap="round"/>
+                                        <path d="M98 52 C 96 62, 100 70, 108 74" fill="none" stroke="#0a0604" stroke-width="1.5"/>
+                                        <!-- Koteletten -->
+                                        <path d="M76 108 L80 126 L83 108 Z" fill="#1c140d"/>
+                                        <path d="M146 108 L142 126 L139 108 Z" fill="#1c140d"/>
+                                        <!-- Augenbrauen: links hoch (skeptisch) -->
+                                        <path d="M84 98 C 92 91, 102 92, 108 97" fill="none" stroke="#2a1b10" stroke-width="3.2" stroke-linecap="round"/>
+                                        <path d="M114 100 C 120 98, 130 98, 138 101" fill="none" stroke="#2a1b10" stroke-width="3.2" stroke-linecap="round"/>
+                                        <!-- Augen -->
+                                        <g class="det-eyes">
+                                            <ellipse cx="95" cy="114" rx="8" ry="5" fill="#f4efe6"/>
+                                            <ellipse cx="127" cy="114" rx="8" ry="5" fill="#f4efe6"/>
+                                            <circle cx="97" cy="114" r="3.6" fill="#2b5f7a"/>
+                                            <circle cx="129" cy="114" r="3.6" fill="#2b5f7a"/>
+                                            <circle cx="97" cy="114" r="1.7" fill="#05080a"/>
+                                            <circle cx="129" cy="114" r="1.7" fill="#05080a"/>
+                                            <circle cx="98.4" cy="112.6" r="1" fill="#fff"/>
+                                            <circle cx="130.4" cy="112.6" r="1" fill="#fff"/>
+                                            <!-- schwere Lider -->
+                                            <path d="M87 111 C 92 107, 100 107, 103 111" fill="none" stroke="#3a2518" stroke-width="2"/>
+                                            <path d="M119 111 C 124 107, 132 107, 135 111" fill="none" stroke="#3a2518" stroke-width="2"/>
+                                        </g>
+                                        <!-- Eckige Brille -->
+                                        <rect x="82" y="104" width="26" height="20" rx="6" fill="rgba(190,230,255,0.12)" stroke="#161b22" stroke-width="3"/>
+                                        <rect x="114" y="104" width="26" height="20" rx="6" fill="rgba(190,230,255,0.12)" stroke="#161b22" stroke-width="3"/>
+                                        <path d="M108 112 L114 112" stroke="#161b22" stroke-width="3"/>
+                                        <path d="M82 110 L74 108 M140 110 L148 108" stroke="#161b22" stroke-width="2.6"/>
+                                        <!-- Lichtreflex auf den Gläsern -->
+                                        <g clip-path="url(#sLensClip)">
+                                            <rect class="det-glint" x="70" y="96" width="7" height="44" fill="rgba(255,255,255,0.85)" transform="rotate(22 96 114)"/>
+                                        </g>
+                                        <!-- Nase -->
+                                        <path d="M111 118 C 108 132, 106 138, 112 141 C 117 139, 118 134, 115 128" fill="none" stroke="#6b4a37" stroke-width="2.2" stroke-linecap="round"/>
+                                        <!-- Mund: Grinsen mit einem hochgezogenen Mundwinkel -->
+                                        <path class="det-mouth" d="M97 158 C 106 164, 118 164, 127 155" fill="#3a1410" stroke="#2a0d0a" stroke-width="2.4" stroke-linecap="round"/>
+                                        <path d="M126 154 C 128 152, 130 152, 131 154" fill="none" stroke="#6b4a37" stroke-width="2" stroke-linecap="round"/>
+                                    </g>
+                                </svg>
+                                <div class="det-nameplate">D. Schatten</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- THE TABLE TOP -->
                     <div class="scene-table-top">
+                        <!-- Requisiten auf dem Tisch -->
+                        <div class="prop mug"></div>
+                        <div class="prop ashtray"></div>
+                        <div class="prop pen"></div>
+                        <div class="prop lamp-glow"></div>
                         <!-- Closed file on the table -->
                         <div id="closed-file" class="closed-file" title="Akte öffnen">
                             <div class="stamp-confidential small">STRENG GEHEIM</div>
@@ -66,8 +247,8 @@
                         <div class="table-underside">
                             <div class="gum" id="gum"></div>
                             <!-- Scrap of paper (Schnipsel) stuck under table -->
-                            <div id="scrap-paper" class="scrap-paper hidden" title="Kassiber">
-                                <span class="scrap-text">Kassiber</span>
+                            <div id="scrap-paper" class="scrap-paper hidden" title="Notiz">
+                                <span class="scrap-text">Notiz</span>
                             </div>
                         </div>
                     </div>
@@ -78,10 +259,18 @@
         <!-- FIXED UI LAYER (Stays perfectly still while scene moves) -->
         <div class="ui-layer">
 
+            <!-- Feste Leiste: Akte / Notiz / nächster Schritt -->
+            <div id="action-bar" class="action-bar hidden">
+                <button id="bar-file" class="bar-btn" title="Akte aufheben">📂 Akte aufheben</button>
+                <button id="bar-scrap" class="bar-btn hidden" title="Notiz öffnen">🗒 Notiz</button>
+                <span id="next-step" class="next-step"></span>
+            </div>
+
             <!-- Dashboard: Streak & Rank -->
             <div id="stats-board" class="stats-board hidden">
                 <div>Streak: <span id="streak-count">0</span> Tage</div>
                 <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
+                <button id="reset-btn" class="reset-btn hidden" title="Heutiges Verhör neu starten (nur lokaler Modus)">↺ Neues Verhör</button>
             </div>
 
             <main class="main-content">
@@ -89,6 +278,8 @@
                 <!-- Login / PIN Screen -->
                 <section id="screen-login" class="screen active fade-transition">
                     <div class="login-box">
+                        <div class="game-logo">Doppel-J-Syndikat</div>
+                        <div class="game-subtitle">— Das Verhör —</div>
                         <h2>ZUTRITT BESCHRÄNKT</h2>
                         <p>PIN eingeben:</p>
                         <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="****">
@@ -123,6 +314,13 @@
                         <div class="stamp-confidential top-right">STRENG GEHEIM</div>
 
                         <h1 class="case-title">Tatvorwurf: <span id="case-name">...</span></h1>
+                        <div id="case-badge" class="case-badge"></div>
+                        <div class="progress-track" id="progress-track">
+                            <span class="progress-step" data-step="1">1 Aussage</span>
+                            <span class="progress-step" data-step="2">2 Notiz</span>
+                            <span class="progress-step" data-step="3">3 Finale</span>
+                            <span class="progress-step" data-step="4">4 Urteil</span>
+                        </div>
 
                         <div class="stage-container" id="stage-1">
                             <h3>Stufe 1: Insider-Brücke</h3>
@@ -134,23 +332,27 @@
 
                         <!-- Stage 2 UI inside the file is now just for solving/guessing -->
                         <div class="stage-container hidden fade-transition" id="stage-2">
-                            <h3>Stufe 2: Der Kassiber</h3>
+                            <h3>Stufe 2: Die Notiz</h3>
+                            <p id="s2-question-file" class="question-text"></p>
                             <div id="s2-guesser-view" class="hidden">
-                                <p>Entschlüssele den Code (Tipp: Schau unter den Tisch!):</p>
+                                <p>Die Detektive sind kurz draußen. Dein Partner hat heimlich geantwortet. Was steht auf der Notiz? Der Hinweis liegt bei der Notiz.</p>
                                 <div class="hint-display">
                                     <span id="s2-length-hint">_ _ _ _ _</span>
                                 </div>
                                 <input type="text" id="s2-guess-input" placeholder="Dein Tipp...">
-                                <button id="btn-submit-2-guess" class="btn-typewriter">Lösen</button>
+                                <button id="btn-submit-2-guess" class="btn-typewriter">Antwort raten</button>
                             </div>
+                            <button id="btn-open-scrap" class="btn-typewriter hidden">🗒 Notiz öffnen</button>
+                            <p id="s2-setter-wait" class="hidden">Deine Notiz ist abgegeben. Jetzt muss dein Partner raten, was du geantwortet hast.</p>
                             <div class="status-msg" id="status-2"></div>
                         </div>
 
                         <div class="stage-container hidden fade-transition" id="stage-3">
                             <h3>Stufe 3: Der Widerspruch (Finale)</h3>
+                            <p id="clue-text" class="clue-text"></p>
                             <p class="question-text" id="q3-text">Lade finale Frage...</p>
                             <input type="text" id="a3-input" placeholder="Finale Antwort...">
-                            <button id="btn-submit-3" class="btn-typewriter">Akte schließen</button>
+                            <button id="btn-submit-3" class="btn-typewriter">Aussage abgeben</button>
                             <div class="status-msg" id="status-3"></div>
                         </div>
 
@@ -185,18 +387,21 @@
                 <!-- Scrap Modal View (Now used for Setter to Write, Guesser to Read) -->
                 <div id="scrap-modal" class="scrap-modal hidden">
                     <div class="scrap-content">
-                        <button id="btn-close-scrap" class="btn-close" title="Kassiber weglegen">X</button>
-                        <h3>Kassiber</h3>
+                        <button id="btn-close-scrap" class="btn-close" title="Notiz weglegen">X</button>
+                        <h3 id="scrap-title">Notiz</h3>
+                        <p id="scrap-question" class="scrap-question"></p>
 
                         <div id="s2-setter-view" class="hidden">
-                            <p>Schreibe den Code:</p>
-                            <input type="text" id="s2-word-input" placeholder="Wort (z.B. Apfel)">
-                            <input type="text" id="s2-emoji-input" maxlength="4" placeholder="1-2 Emojis (z.B. 🍎🐛)">
-                            <button id="btn-submit-2-set" class="btn-typewriter">Kassiber unters den Tisch kleben</button>
+                            <p class="scrap-hint">Die Detektive sind kurz draußen. Beantworte die Frage heimlich als dein Alibi:</p>
+                            <input type="text" id="s2-word-input" placeholder="Deine Antwort (ein Wort)">
+                            <input type="text" id="s2-emoji-input" maxlength="4" placeholder="Hinweis: 1-2 Emojis (z.B. 🍎🐛)">
+                            <button id="btn-submit-2-set" class="btn-typewriter">Notiz zustecken</button>
                         </div>
 
                         <div id="s2-guesser-hint-view" class="hidden">
+                            <p class="scrap-hint">Das hat dein Partner dir zugesteckt:</p>
                             <div id="s2-emoji-hint" class="emoji-huge">🍎🐛</div>
+                            <div id="s2-letter-hint" class="hint-display"></div>
                         </div>
                     </div>
                 </div>
@@ -212,6 +417,8 @@
                         <button id="btn-smuggle-back">Zurück</button>
                 </div>
             </div>
+
+                <div id="verdict-stamp" class="verdict-stamp hidden"></div>
 
                 <!-- NEW: Subtitles Dialog System -->
                 <div id="dialog-system" class="dialog-system">

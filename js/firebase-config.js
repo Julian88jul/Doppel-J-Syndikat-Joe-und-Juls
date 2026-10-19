@@ -1,7 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-// PLACEHOLDER: Replace with actual Firebase config
+// Trage hier die Config deines Firebase-Projekts ein
+// (Firebase Console -> Projekteinstellungen -> Allgemein -> Deine Apps -> Web-App -> SDK-Konfiguration).
+// Solange hier noch "Placeholder"-Werte stehen, läuft das Spiel im lokalen Modus
+// (Daten nur in diesem Browser, Tabs synchronisieren sich untereinander).
 const firebaseConfig = {
     apiKey: "AIzaSyPlaceholderKeyForFirebaseConfig123",
     authDomain: "doppel-j-syndikat.firebaseapp.com",
@@ -12,7 +12,100 @@ const firebaseConfig = {
     appId: "1:123456789012:web:abcdef1234567890abcdef"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const FIREBASE_VERSION = "10.8.0";
+const isPlaceholder = JSON.stringify(firebaseConfig).includes("Placeholder");
 
-export { db, ref, set, get, onValue, update };
+// --- Lokaler Ersatz für die Firebase-Realtime-Database (localStorage + BroadcastChannel) ---
+function createLocalApi() {
+    const KEY = 'djs_local_db';
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('djs_local_db') : null;
+    const listeners = new Set();
+
+    const load = () => {
+        try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
+    };
+    const parts = (path) => path.split('/').filter(Boolean);
+    const getAt = (path) => {
+        let node = load();
+        for (const p of parts(path)) {
+            if (node === null || typeof node !== 'object' || !(p in node)) return null;
+            node = node[p];
+        }
+        return node === undefined ? null : node;
+    };
+    const snapshot = (val) => ({
+        exists: () => val !== null && val !== undefined,
+        val: () => (val === null ? null : JSON.parse(JSON.stringify(val)))
+    });
+    const notify = () => listeners.forEach(fn => fn());
+    const write = (path, mutate) => {
+        const root = load();
+        const ps = parts(path);
+        let node = root;
+        for (const p of ps) {
+            if (node[p] === null || typeof node[p] !== 'object') node[p] = {};
+            node = node[p];
+        }
+        mutate(node, ps, root);
+        localStorage.setItem(KEY, JSON.stringify(root));
+        notify();
+        if (channel) channel.postMessage('changed');
+    };
+
+    window.addEventListener('storage', (e) => { if (e.key === KEY) notify(); });
+    if (channel) channel.onmessage = notify;
+
+    return {
+        db: {},
+        ref: (db, path = '') => ({ path }),
+        get: async (r) => snapshot(getAt(r.path)),
+        set: async (r, value) => {
+            const ps = parts(r.path);
+            if (ps.length === 0) { localStorage.setItem(KEY, JSON.stringify(value)); notify(); return; }
+            const last = ps.pop();
+            write(ps.join('/'), (node) => { node[last] = value; });
+        },
+        // Wie bei Firebase: ein null-Wert löscht den Eintrag
+        update: async (r, values) => write(r.path, (node) => {
+            Object.entries(values).forEach(([k, v]) => { if (v === null) delete node[k]; else node[k] = v; });
+        }),
+        onValue: (r, cb) => {
+            const fire = () => cb(snapshot(getAt(r.path)));
+            listeners.add(fire);
+            setTimeout(fire, 0);
+            return () => listeners.delete(fire);
+        }
+    };
+}
+
+async function createFirebaseApi() {
+    const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+    const [appMod, dbMod] = await Promise.all([
+        import(`${base}/firebase-app.js`),
+        import(`${base}/firebase-database.js`)
+    ]);
+    const app = appMod.initializeApp(firebaseConfig);
+    return {
+        db: dbMod.getDatabase(app),
+        ref: dbMod.ref,
+        set: dbMod.set,
+        get: dbMod.get,
+        onValue: dbMod.onValue,
+        update: dbMod.update
+    };
+}
+
+let api;
+let offlineMode = true;
+if (!isPlaceholder) {
+    try {
+        api = await createFirebaseApi();
+        offlineMode = false;
+    } catch (e) {
+        console.error("Firebase konnte nicht geladen werden, nutze lokalen Modus.", e);
+    }
+}
+if (!api) api = createLocalApi();
+
+export const { db, ref, set, get, onValue, update } = api;
+export const isLocalMode = offlineMode;
