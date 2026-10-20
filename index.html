@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Doppel-J-Syndikat - Das Verhör</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./css/style.css?v=20261021a">
+    <link rel="stylesheet" href="./css/style.css?v=20261021b">
 </head>
 <body>
 
@@ -329,11 +329,13 @@
                         <h1 class="case-title">Tatvorwurf: <span id="case-name">...</span></h1>
                         <div id="case-badge" class="case-badge"></div>
                         <div class="progress-track" id="progress-track">
-                            <span class="progress-step" data-step="1">1 Aussage</span>
-                            <span class="progress-step" data-step="2">2 Notiz</span>
-                            <span class="progress-step" data-step="3">3 Alibi</span>
-                            <span class="progress-step" data-step="4">4 Urteil</span>
+                            <span class="progress-step" data-step="1" role="button" tabindex="0">1 Aussage</span>
+                            <span class="progress-step" data-step="2" role="button" tabindex="0">2 Notiz</span>
+                            <span class="progress-step" data-step="3" role="button" tabindex="0">3 Alibi</span>
+                            <span class="progress-step" data-step="4" role="button" tabindex="0">4 Panik</span>
                         </div>
+                        <p class="progress-hint" id="progress-hint">Tipp: Geschaffte Stufen oben antippen, um zu sehen, was jeder gesagt hat.</p>
+                        <div id="recap" class="recap hidden"></div>
 
                         <div class="stage-container" id="stage-1">
                             <h3>Stufe 1: Insider-Brücke</h3>
@@ -385,7 +387,9 @@
                             <!-- Level 4: Die 1-Minuten-Panik -->
                             <div id="panic-section" class="panic-section hidden">
                                 <div class="panic-timer"><span id="panic-seconds">60</span><small>Sek.</small></div>
-                                <p class="panic-text">Eure Aussage ist geplatzt! Schickt so viele Wörter, wie ihr wollt. Ihr seid frei, sobald euer <b>letztes Wort bei beiden gleich</b> ist.</p>
+                                <p class="panic-text">Eure Aussage ist geplatzt! Beantwortet die Frage unten so oft ihr wollt. Ihr seid frei, sobald euer <b>letztes Wort bei beiden gleich</b> ist.</p>
+                                <p id="panic-question" class="panic-question"></p>
+                                <p id="panic-hidden-note" class="panic-hidden-note hidden">Dein Partner hat schon geantwortet. Gib zuerst dein eigenes Wort ein, dann siehst du seins.</p>
                                 <div class="panic-last">
                                     <div><span>Dein letztes Wort</span><b id="panic-mine">–</b></div>
                                     <div><span id="panic-partner-label">Partner</span><b id="panic-theirs">–</b></div>
@@ -397,7 +401,17 @@
                                 </div>
                             </div>
 
-                            <div id="final-verdict"></div>                        </div>
+                            <div id="final-verdict"></div>
+                        </div>
+
+                        <!-- Rückblick auf eine geschaffte Stufe: Was hat jeder gesagt? -->
+                        <div class="stage-container stage-off" id="stage-review">
+                            <h3 id="review-title">Rückblick</h3>
+                            <p class="question-text" id="review-question"></p>
+                            <div class="result-comparison" id="review-answers"></div>
+                            <p class="review-detail" id="review-detail"></p>
+                            <button id="review-back" class="btn-typewriter">↩ Zurück zur aktuellen Stufe</button>
+                        </div>
                     </div>
                 </div>
 
@@ -447,6 +461,6 @@
     </div> <!-- /room-container -->
 
     <!-- Firebase v10 SDK Setup -->
-    <script type="module" src="./js/app.js?v=20261021a"></script>
+    <script type="module" src="./js/app.js?v=20261021b"></script>
 </body>
 </html>

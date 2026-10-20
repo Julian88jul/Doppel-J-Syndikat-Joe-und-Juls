@@ -1839,3 +1839,60 @@ body.panic-mode .vignette {
 .build-info { margin-top: 8px; }
 .reset-start { background: rgba(12, 10, 8, 0.88); position: relative; z-index: 2; }
 .build-info { position: relative; z-index: 2; text-shadow: 0 1px 3px #000; }
+
+/* =====================================================
+   RÜCKBLICK: geschaffte Stufen grün oder rot, anklickbar
+   ===================================================== */
+.progress-step { user-select: none; }
+.progress-step.clickable { cursor: pointer; }
+.progress-step.clickable:hover { filter: brightness(1.08); transform: translateY(-1px); }
+/* Grün = gleich gesagt, Rot = Unterschiedliches (überschreibt das alte Standard-Grün von .done) */
+.progress-step.done.ok { background: rgba(46, 125, 50, 0.28); color: #1f5a22; border-color: #3f8f43; }
+.progress-step.done.ok::before { content: '✓ '; }
+.progress-step.done.bad { background: rgba(198, 40, 40, 0.28); color: #8f1d1d; border-color: #c62828; font-weight: 700; }
+.progress-step.done.bad::before { content: '✗ '; }
+.progress-step.viewing { box-shadow: 0 0 0 2px var(--ink); }
+
+.progress-hint { font-size: 0.72rem; color: #6b5a3c; margin: -12px 0 12px; font-style: italic; }
+
+.recap {
+    font-size: 0.82rem;
+    line-height: 1.35;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+    border-left: 4px solid;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.recap.ok { background: rgba(46, 125, 50, 0.14); border-color: #3f8f43; color: #1f5a22; }
+.recap.bad { background: rgba(198, 40, 40, 0.14); border-color: #c62828; color: #8f1d1d; }
+.recap:hover { filter: brightness(0.96); }
+
+/* Rückblick-Seite */
+.result-box.review-box.ok { background: rgba(46, 125, 50, 0.16); border: 2px solid #3f8f43; }
+.result-box.review-box.bad { background: rgba(198, 40, 40, 0.16); border: 2px solid #c62828; }
+.review-box h4 { font-size: 0.8rem; }
+.review-box p { font-size: 1.05rem; }
+.review-detail { margin: 6px 0 14px; font-weight: 700; }
+.review-detail.ok { color: #1f5a22; }
+.review-detail.bad { color: #8f1d1d; }
+
+/* Panik: Frage und verdeckte Partner-Antwort */
+.panic-question {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 0 0 10px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #9a8a6a;
+    border-radius: 3px;
+}
+.panic-hidden-note {
+    font-size: 0.8rem;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #8f1d1d;
+    font-style: italic;
+}
+.panic-msg.masked { background: #e8dfc7; color: #6b5a3c; border: 1px dashed #9a8a6a; font-style: italic; }

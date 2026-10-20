@@ -1,7 +1,7 @@
-import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261021a';
+import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261021b';
 
 // Versionsanzeige: so sieht man auf dem Handy sofort, ob die neue Version geladen wurde und in welchem Modus gespielt wird
-const APP_BUILD = '20261021a';
+const APP_BUILD = '20261021b';
 const MODE_LABELS = { firebase: 'Firebase (online)', server: 'Test-Server (WLAN)', local: 'nur dieses Gerät' };
 
 // --- CONFIG & STATE ---
@@ -206,6 +206,17 @@ const panicPartnerLabel = document.getElementById('panic-partner-label');
 const panicLog = document.getElementById('panic-log');
 const panicInput = document.getElementById('panic-input');
 const btnPanicSend = document.getElementById('btn-panic-send');
+const panicQuestion = document.getElementById('panic-question');
+const panicHiddenNote = document.getElementById('panic-hidden-note');
+
+// Rückblick auf geschaffte Stufen
+const stageReview = document.getElementById('stage-review');
+const reviewTitle = document.getElementById('review-title');
+const reviewQuestion = document.getElementById('review-question');
+const reviewAnswers = document.getElementById('review-answers');
+const reviewDetail = document.getElementById('review-detail');
+const recapEl = document.getElementById('recap');
+const progressHint = document.getElementById('progress-hint');
 
 const detectivesBg = document.querySelector('.detectives-bg');
 
@@ -357,18 +368,155 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// --- ERGEBNISSE & RÜCKBLICK ---
+// Pro geschaffter Stufe: Frage, was jeder gesagt hat und ob es zusammenpasste (grün) oder nicht (rot)
+function levelResults(data) {
+    const res = [null, null, null, null, null]; // Index 1..4
+    const s1 = data.stage1 || {};
+    const s2 = data.stage2 || {};
+    const s3 = data.stage3 || {};
+    const setter = isEvenDay ? 'Juls' : 'Joe';
+    const guesser = setter === 'Juls' ? 'Joe' : 'Juls';
+
+    if (s1.Juls && s1.Joe) {
+        let ok, note;
+        if (activeCase.type === 'personal') {
+            const jOk = matchesTarget(s1.Juls, activeCase.targets);
+            const oOk = matchesTarget(s1.Joe, activeCase.targets);
+            ok = jOk && oOk;
+            note = ok ? `Beide haben die richtige Antwort getroffen: ${activeCase.targets[0]}.`
+                      : `Gesucht war: ${activeCase.targets[0]}. ${!jOk && !oOk ? 'Keiner von euch hat es getroffen.' : (jOk ? `${DISPLAY_NAMES.Joe} lag daneben.` : `${DISPLAY_NAMES.Juls} lag daneben.`)}`;
+        } else {
+            ok = normalizeAnswer(s1.Juls) === normalizeAnswer(s1.Joe);
+            note = ok ? 'Ihr habt dasselbe gesagt.' : 'Ihr habt Verschiedenes gesagt.';
+        }
+        res[1] = { ok, q: activeCase.q1, note, boxes: [[`${DISPLAY_NAMES.Juls}`, s1.Juls], [`${DISPLAY_NAMES.Joe}`, s1.Joe]] };
+    }
+
+    if (s2.word && s2.guess) {
+        const ok = normalizeAnswer(s2.guess) === normalizeAnswer(s2.word);
+        res[2] = {
+            ok, q: activeCase.q2,
+            note: ok ? 'Die Alibi-Antwort wurde erraten.' : 'Die Alibi-Antwort wurde nicht erraten.',
+            boxes: [[`${DISPLAY_NAMES[setter]} schrieb`, `${s2.word}${s2.emoji ? ' ' + s2.emoji : ''}`], [`${DISPLAY_NAMES[guesser]} riet`, s2.guess]]
+        };
+    }
+
+    if (s3.Juls && s3.Joe) {
+        const ok = s3.Juls === s3.Joe;
+        res[3] = {
+            ok, q: activeCase.q3,
+            note: ok ? 'Derselbe Gegenstand: Das Alibi hält.' : 'Verschiedene Gegenstände: Die Aussage ist geplatzt.',
+            boxes: [[DISPLAY_NAMES.Juls, itemLabel(s3.Juls)], [DISPLAY_NAMES.Joe, itemLabel(s3.Joe)]]
+        };
+        if (ok) {
+            res[4] = { ok: true, q: '', note: 'Die Panik war nicht nötig, weil das Alibi in Stufe 3 gehalten hat.', boxes: [] };
+        } else if (data.result) {
+            const wasOk = data.result === 'win';
+            res[4] = {
+                ok: wasOk, q: activeCase.q4,
+                note: wasOk ? 'Im letzten Moment dasselbe Wort.' : 'Die Minute ist ohne gleiches Wort abgelaufen.',
+                boxes: [[DISPLAY_NAMES.Juls + ' (letztes Wort)', lastWord(data, 'Juls') || '–'], [DISPLAY_NAMES.Joe + ' (letztes Wort)', lastWord(data, 'Joe') || '–']]
+            };
+        }
+    }
+    return res;
+}
+
 // --- PROGRESS ---
-function updateProgress(data) {
-    let step = 1;
-    if (data.stage1 && data.stage1.Juls && data.stage1.Joe) step = 2;
-    if (data.stage2 && data.stage2.guess) step = 3;
-    if (data.stage3 && data.stage3.Juls && data.stage3.Joe) step = 4;
+let reviewLevel = null;   // null = aktuelle Stufe zeigen, 1..4 = Rückblick auf eine geschaffte Stufe
+let lastLevels = [];
+let currentStageEl = null;
+
+function applyStageVisibility() {
+    [stage1, stage2, stage3, stageResult].forEach(s => s.classList.toggle('stage-off', reviewLevel !== null || s !== currentStageEl));
+    stageReview.classList.toggle('stage-off', reviewLevel === null);
+}
+
+function openReview(n) {
+    if (!lastLevels[n]) return;
+    reviewLevel = n;
+    renderReview();
+    applyStageVisibility();
+    updateProgressClasses();
+    recapEl.classList.add('hidden'); // im Rückblick steht die Stufe ohnehin groß da
+    openFileModal.scrollTop = 0;
+}
+function exitReview() {
+    if (reviewLevel === null) return;
+    reviewLevel = null;
+    applyStageVisibility();
+    updateProgressClasses();
+    if (lastProgressData) updateProgress(lastProgressData); // Kurzfazit wieder einblenden
+}
+
+function renderReview() {
+    const lvl = reviewLevel && lastLevels[reviewLevel];
+    if (!lvl) { exitReview(); return; }
+    const titles = { 1: 'Insider-Brücke', 2: 'Die Notiz', 3: 'Der Alibi-Beweis', 4: 'Die 1-Minuten-Panik' };
+    reviewTitle.textContent = `Rückblick Stufe ${reviewLevel}: ${titles[reviewLevel]} ${lvl.ok ? '✔' : '✘'}`;
+    reviewQuestion.textContent = lvl.q || '';
+    reviewAnswers.innerHTML = '';
+    lvl.boxes.forEach(([label, value]) => {
+        const box = document.createElement('div');
+        box.className = `result-box review-box ${lvl.ok ? 'ok' : 'bad'}`;
+        const h = document.createElement('h4'); h.textContent = label;
+        const p = document.createElement('p'); p.textContent = value;
+        box.append(h, p);
+        reviewAnswers.appendChild(box);
+    });
+    reviewDetail.textContent = lvl.note;
+    reviewDetail.className = `review-detail ${lvl.ok ? 'ok' : 'bad'}`;
+}
+
+function updateProgressClasses() {
+    let current = null;
+    for (let n = 1; n <= 4; n++) { if (!lastLevels[n]) { current = n; break; } }
     document.querySelectorAll('.progress-step').forEach(el => {
         const n = Number(el.dataset.step);
-        el.classList.toggle('done', n < step);
-        el.classList.toggle('current', n === step);
+        const lvl = lastLevels[n];
+        el.classList.toggle('done', !!lvl);
+        el.classList.toggle('ok', !!lvl && lvl.ok);
+        el.classList.toggle('bad', !!lvl && !lvl.ok);
+        el.classList.toggle('current', n === current && reviewLevel === null);
+        el.classList.toggle('viewing', reviewLevel === n);
+        el.classList.toggle('clickable', !!lvl || n === current);
     });
 }
+
+let lastProgressData = null;
+function updateProgress(data) {
+    lastProgressData = data;
+    lastLevels = levelResults(data);
+    updateProgressClasses();
+    if (reviewLevel !== null) renderReview();
+
+    // Kurzfazit der zuletzt geschafften Stufe, rot oder grün, direkt unter dem Fortschritt
+    let lastDone = 0;
+    for (let n = 1; n <= 4; n++) if (lastLevels[n]) lastDone = n;
+    progressHint.classList.toggle('hidden', lastDone === 0);
+    if (lastDone === 0 || reviewLevel !== null) {
+        recapEl.classList.add('hidden');
+    } else {
+        const lvl = lastLevels[lastDone];
+        recapEl.classList.remove('hidden');
+        recapEl.className = `recap ${lvl.ok ? 'ok' : 'bad'}`;
+        recapEl.textContent = `${lvl.ok ? '✔' : '✘'} Stufe ${lastDone}: ` +
+            (lvl.boxes.length ? lvl.boxes.map(([label, value]) => `${label} „${value}“`).join(' · ') + ' – ' : '') + lvl.note;
+        recapEl.onclick = () => openReview(lastDone);
+    }
+}
+
+// Stufen oben antippen: geschaffte Stufen zeigen den Rückblick, die aktuelle Stufe führt zurück
+document.querySelectorAll('.progress-step').forEach(el => {
+    const act = () => {
+        const n = Number(el.dataset.step);
+        if (lastLevels[n]) openReview(n); else exitReview();
+    };
+    el.addEventListener('click', act);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+});
+document.getElementById('review-back').addEventListener('click', exitReview);
 
 // --- MODAL LOGIC ---
 let fileEverOpened = false; // Die Akte muss am Anfang erst aufgehoben werden
@@ -580,9 +728,22 @@ const ALIBI_QUESTIONS = {
     case_8: "Euer Alibi: Wo habt ihr die Serie an dem Abend geschaut?"
 };
 
+// Level 4 (Panik): Alibi-Frage, die beide mit einem Wort beantworten, bis die letzten Wörter gleich sind
+const PANIC_QUESTIONS = {
+    case_1: "Letzte Chance: Was habt ihr am Strand gegessen?",
+    case_2: "Letzte Chance: Wer von euch hat im Spiel zuletzt verloren?",
+    case_3: "Letzte Chance: Wohin wolltet ihr mit dem Scooter eigentlich fahren?",
+    case_4: "Letzte Chance: Wo habt ihr das Moped abgestellt?",
+    case_5: "Letzte Chance: Wie heißt das Tier, mit dem ihr im Park wart?",
+    case_6: "Letzte Chance: Was habt ihr im Drive-in zu trinken bestellt?",
+    case_7: "Letzte Chance: Was habt ihr an dem Abend gekocht?",
+    case_8: "Letzte Chance: Wie heißt eure Lieblingsfigur aus der Serie?"
+};
+
 function normalizeCase(id, c) {
     return {
         id,
+        q4: c.q4 || PANIC_QUESTIONS[id] || "Letzte Chance: Was habt ihr zur Tatzeit wirklich gemacht?",
         q2: c.q2 || ALIBI_QUESTIONS[id] || "Euer Alibi: Wo wart ihr zur Tatzeit?",
         clue: c.clue || CLUES[id] || "Wir haben noch etwas am Tatort gefunden.",
         type: c.type === 'personal' ? 'personal' : 'general',
@@ -740,6 +901,7 @@ async function loadDailyCase() {
     // Alibi-Frage der Notiz (Stufe 2)
     document.getElementById('s2-question-file').innerText = activeCase.q2;
     document.getElementById('scrap-question').innerText = activeCase.q2;
+    panicQuestion.innerText = activeCase.q4;
 
     setupStage2Roles();
 }
@@ -781,7 +943,8 @@ const spoken = {};
 function sayOnce(key, text, duration, who, delay = 0) {
     if (spoken[key]) return;
     spoken[key] = true;
-    if (delay) setTimeout(() => speak(text, duration, who), delay);
+    // Verzögerte Sätze nicht mehr sprechen, wenn inzwischen schon Alarm oder Urteil gekommen ist
+    if (delay) setTimeout(() => { if (!autoShown.final) speak(text, duration, who); }, delay);
     else speak(text, duration, who);
 }
 
@@ -865,12 +1028,14 @@ function guideToStage(data) {
     if (data.stage2 && data.stage2.guess) target = stage3;
     if (data.stage3 && data.stage3.Juls && data.stage3.Joe) target = stageResult;
 
-    // Akte als Schritt-für-Schritt-Ablauf: nur die aktuelle Stufe ist sichtbar
-    [stage1, stage2, stage3, stageResult].forEach(s => s.classList.toggle('stage-off', s !== target));
+    // Akte als Schritt-für-Schritt-Ablauf: nur die aktuelle Stufe ist sichtbar (oder der gewählte Rückblick)
+    currentStageEl = target;
     refreshActionBar(data, target, isSetter);
 
     if (target.id !== autoShown.stageId) {
         autoShown.stageId = target.id;
+        reviewLevel = null; // neue Stufe: Rückblick verlassen
+        updateProgressClasses();
         if (target === stageResult) {
             // Urteil: Akte wird zur Verkündung wieder aufgeschlagen
             if (scrapModal.classList.contains('hidden')) openFileModal.classList.remove('hidden');
@@ -879,6 +1044,7 @@ function guideToStage(data) {
             openFileModal.classList.add('hidden');
         }
     }
+    applyStageVisibility();
 }
 
 // Auswertung der Insider-Brücke (Stufe 1): persönlicher Fall = Ziel-Antwort, allgemeiner Fall = Übereinstimmung
@@ -897,13 +1063,23 @@ function describeStage1(s1) {
                     : `Verschiedene Wege... Juls: „${j}“, Joe: „${o}“. Aber weiter geht's.`;
         stage1Outcome = same;
     }
-    // Die Kommissare reagieren und gehen kurz raus. Von der geheimen Notiz wissen sie nichts!
-    sayOnce('s1react', stage1Outcome
-        ? "Hm. Eure Geschichten passen erstaunlich gut zusammen. Zu gut. Wir müssen kurz telefonieren. Bleibt sitzen."
-        : "Eure Aussagen weichen ab. Interessant. Wir müssen das kurz besprechen. Bleibt sitzen und rührt euch nicht.", 6000);
+    // Die Kommissare sagen klar, ob es gestimmt hat, und gehen dann kurz raus. Von der geheimen Notiz wissen sie nichts!
+    const target = activeCase.targets && activeCase.targets[0];
+    let said;
+    if (activeCase.type === 'personal') {
+        said = stage1Outcome
+            ? `Beide sagen „${target}“. Treffer! Die Insider-Brücke steht. Wir müssen kurz telefonieren. Bleibt sitzen.`
+            : `Gesucht war „${target}“. Julian sagt „${j}“, Joe sagt „${o}“. Das stimmt nicht, Runde eins verpatzt! Wir müssen kurz telefonieren. Bleibt sitzen.`;
+    } else {
+        said = stage1Outcome
+            ? `Julian und Joe sagen beide „${j}“. Gleiche Antwort! Verdächtig gut. Wir müssen kurz telefonieren. Bleibt sitzen.`
+            : `Julian sagt „${j}“, Joe sagt „${o}“. Das passt nicht zusammen, Runde eins verpatzt! Wir müssen kurz telefonieren. Bleibt sitzen.`;
+    }
+    sayOnce('s1react', said, 7000, activeCase.speaker);
     if (!autoShown.s1result) {
         autoShown.s1result = true;
-        playSound(stage1Outcome ? 'win' : 'creak');
+        playSound(stage1Outcome ? 'win' : 'lose');
+        showVerdictStamp(stage1Outcome ? 'TREFFER!' : 'DANEBEN!', stage1Outcome ? 'win' : 'lose');
     }
     return text;
 }
@@ -996,11 +1172,20 @@ function updateUIBasedOnState(data) {
                 if (clueEl) clueEl.innerText = activeCase.clue ? `🔍 Neues Indiz: ${activeCase.clue}` : '';
                 // Die Detektive kommen zurück, vergleichen das Alibi aus der Notiz und leeren die Taschen aus
                 const alibiHolds = data.stage2.word && normalizeAnswer(data.stage2.guess) === normalizeAnswer(data.stage2.word);
-                const alibiLine = alibiHolds
-                    ? "Euer Alibi deckt sich. Verdächtig gut. "
-                    : "Euer Alibi hat Lücken. Das gefällt mir. ";
-                sayOnce('s3intro', `So, da sind wir wieder. ${alibiLine}Wir haben etwas gefunden: ${activeCase.clue} Sie bestreiten die Tat? Dann beweisen Sie Ihr Alibi. Wir haben Ihre Taschen geleert, alles liegt auf dem Tisch. ${activeCase.q3}`, 12000, activeCase.speaker);
-                if (alibiHolds && !spoken.s3win) { spoken.s3win = true; playSound('win'); }
+                const setterName = DISPLAY_NAMES[isEvenDay ? 'Juls' : 'Joe'];
+                const guesserName = DISPLAY_NAMES[isEvenDay ? 'Joe' : 'Juls'];
+                // Erst das Ergebnis der Notiz klar ansagen, danach folgt Stufe 3
+                const resultLine = alibiHolds
+                    ? `So, da sind wir wieder. ${setterName} hatte „${data.stage2.word}“ aufgeschrieben, und ${guesserName} hat „${data.stage2.guess}“ geraten. Volltreffer! Euer Alibi deckt sich. Verdächtig gut.`
+                    : `So, da sind wir wieder. ${setterName} hatte „${data.stage2.word}“ aufgeschrieben, aber ${guesserName} hat „${data.stage2.guess}“ geraten. Daneben! Euer Alibi hat Lücken.`;
+                const resultDelay = (resultLine.length + 2) * (resultLine.length + 2 > 120 ? 22 : 40) + 3500;
+                sayOnce('s2result', resultLine, 3500, activeCase.speaker);
+                sayOnce('s3intro', `Wir haben etwas gefunden: ${activeCase.clue} Sie bestreiten die Tat? Dann beweisen Sie Ihr Alibi. Wir haben Ihre Taschen geleert, alles liegt auf dem Tisch. ${activeCase.q3}`, 12000, activeCase.speaker, resultDelay);
+                if (!spoken.s2stamp) {
+                    spoken.s2stamp = true;
+                    playSound(alibiHolds ? 'win' : 'lose');
+                    showVerdictStamp(alibiHolds ? 'TREFFER!' : 'DANEBEN!', alibiHolds ? 'win' : 'lose');
+                }
             }
         }
     }
@@ -1020,7 +1205,9 @@ function updateUIBasedOnState(data) {
     }
 
     if (s3.Juls && s3.Joe) {
-        status3.innerText = "Beide haben ausgesagt!";
+        status3.innerText = s3.Juls === s3.Joe
+            ? `✔ Beide haben ${itemLabel(s3.Juls)} gewählt.`
+            : `✘ ${DISPLAY_NAMES.Juls}: ${itemLabel(s3.Juls)} · ${DISPLAY_NAMES.Joe}: ${itemLabel(s3.Joe)}`;
         stageResult.classList.remove('hidden');
         evaluateFinal(data);
     }
@@ -1181,14 +1368,19 @@ function runPanic(data) {
         autoShown.final = 'alarm';
         playSound('alarm');
         shakeScreen();
-        speak("ROTER ALARM! Eure Geschichten passen nicht zusammen! Ihr habt eine Minute. Sagt beide dasselbe – oder ab in die Zelle!", 6000, 'grimm');
+        showVerdictStamp('GEPLATZT!', 'lose');
+        const itemJ = itemById(data.stage3.Juls), itemO = itemById(data.stage3.Joe);
+        speak(`Julian sagt „${itemJ ? itemJ.name : data.stage3.Juls}“, Joe sagt „${itemO ? itemO.name : data.stage3.Joe}“. Das passt nicht zusammen! Eure Aussage ist geplatzt, ROTER ALARM! Ihr habt eine Minute, beantwortet beide: ${activeCase.q4}`, 9000, 'grimm');
     }
 
-    // Partnerwörter und eigene Wörter anzeigen
+    // Eigene und Partnerwörter anzeigen. Das Wort des Partners bleibt verdeckt, bis man selbst eins abgeschickt hat.
     const partner = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
+    const iSent = !!lastWord(data, currentUserRole);
+    const theirWord = lastWord(data, partner);
     panicPartnerLabel.innerText = `${DISPLAY_NAMES[partner]}s letztes Wort`;
     panicMine.innerText = lastWord(data, currentUserRole) || '–';
-    panicTheirs.innerText = lastWord(data, partner) || '–';
+    panicTheirs.innerText = iSent ? (theirWord || '–') : (theirWord ? '✉ …' : '–');
+    panicHiddenNote.classList.toggle('hidden', iSent || !theirWord);
     renderPanicLog(data);
 
     if (!panicInterval) {
@@ -1198,11 +1390,26 @@ function runPanic(data) {
 }
 
 function renderPanicLog(data) {
-    const log = (data.panic && data.panic.log) ? Object.entries(data.panic.log) : [];
-    log.sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0) || a[0].localeCompare(b[0]));
-    const known = panicLog.childElementCount;
-    if (log.length === known) return;
+    const allLog = (data.panic && data.panic.log) ? Object.entries(data.panic.log) : [];
+    allLog.sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0) || a[0].localeCompare(b[0]));
+    // Wörter des Partners sieht man erst, wenn man selbst eins abgeschickt hat
+    const iSent = !!lastWord(data, currentUserRole);
+    const log = iSent ? allLog : allLog.filter(([, e]) => e.role === currentUserRole);
+    const known = panicLog.querySelectorAll('.panic-msg:not(.masked)').length;
+    // Nur neu zeichnen, wenn sich etwas geändert hat (Anzahl der Wörter oder ob ich schon geantwortet habe)
+    const renderKey = `${iSent}|${log.length}|${allLog.length}`;
+    if (renderKey === panicRenderKey) {
+        panicLogSeen = allLog.length;
+        return;
+    }
+    panicRenderKey = renderKey;
     panicLog.innerHTML = '';
+    if (!iSent && allLog.length) {
+        const hidden = document.createElement('div');
+        hidden.className = 'panic-msg theirs masked';
+        hidden.textContent = '✉ Dein Partner hat schon geantwortet …';
+        panicLog.appendChild(hidden);
+    }
     log.forEach(([, e]) => {
         const line = document.createElement('div');
         line.className = `panic-msg ${e.role === currentUserRole ? 'mine' : 'theirs'}`;
@@ -1212,16 +1419,17 @@ function renderPanicLog(data) {
         panicLog.appendChild(line);
     });
     panicLog.scrollTop = panicLog.scrollHeight;
-    // Neues Wort vom Partner: kurzer Ton
+    // Neues Wort vom Partner: kurzer Ton (nur sichtbar, wenn man selbst schon geantwortet hat)
     const newest = log[log.length - 1];
-    if (log.length > known && newest && newest[1].role !== currentUserRole) playSound('pop');
+    if (iSent && log.length > known && newest && newest[1].role !== currentUserRole) playSound('pop');
 
     // Die Detektive haken nach, wenn beide ein Wort haben, die Wörter aber nicht zusammenpassen
     // (beim ersten Laden der Seite nicht, sonst würden alte Wörter erneut kommentiert)
-    if (panicLogSeen !== null && log.length > panicLogSeen) doubtIfMismatch(data);
-    panicLogSeen = log.length;
+    if (panicLogSeen !== null && allLog.length > panicLogSeen && iSent) doubtIfMismatch(data);
+    panicLogSeen = allLog.length;
 }
 
+let panicRenderKey = null;
 let panicLogSeen = null;
 let lastDoubtAt = 0;
 let lastDoubtIndex = -1;
@@ -1258,7 +1466,7 @@ function panicTick() {
     panicInput.disabled = !running;
     btnPanicSend.disabled = !running;
     if (now < start) panicInput.placeholder = 'Gleich geht\'s los...';
-    else if (running) panicInput.placeholder = 'Wort eintippen + Enter';
+    else if (running) panicInput.placeholder = 'Deine Antwort + Enter';
 
     // Ticken jede Sekunde, in den letzten 10 Sekunden doppelt
     if (running && secondsLeft !== lastTickSecond) {
@@ -1318,7 +1526,8 @@ function addNewGameButton() {
 
 function finishGame(data, won, how) {
     stopPanic();
-    panicSection.classList.toggle('hidden', how !== 'panic');
+    // Nach dem Urteil ist der Countdown vorbei: Bereich ausblenden. Die Wörter stehen im Rückblick (Stufe 4 oben antippen).
+    panicSection.classList.add('hidden');
     const titleEl = document.getElementById('result-title');
 
     if (won) {
@@ -1329,9 +1538,11 @@ function finishGame(data, won, how) {
             autoShown.final = 'win';
             playSound('win');
             showVerdictStamp('FREIHEIT!', 'win');
+            const itemName = (itemById(data.stage3.Juls) || {}).name || data.stage3.Juls;
+            const finalWord = lastWord(data, 'Juls');
             speak(how === 'alibi'
-                ? "Hm. Beide derselbe Gegenstand. Ihr Alibi ist wasserdicht. Sie können gehen... für heute."
-                : "Tsk. Im letzten Moment dieselbe Geschichte. Na gut. Verschwinden Sie.", 6000, how === 'alibi' ? 'schatten' : 'grimm');
+                ? `Beide sagen „${itemName}“. Volltreffer! Ihr Alibi ist wasserdicht. Sie können gehen... für heute.`
+                : `Beide sagen „${finalWord}“. Im letzten Moment dieselbe Geschichte! Na gut. Verschwinden Sie.`, 7000, how === 'alibi' ? 'schatten' : 'grimm');
         }
         if (!data.scoreProcessed) {
             processWin();
@@ -1346,7 +1557,11 @@ function finishGame(data, won, how) {
             playSound('lose');
             showVerdictStamp('VERHAFTET!', 'lose');
             shakeScreen();
-            speak("Die Zeit ist um. Ihre Geschichten passen nicht zusammen. Abführen!", 6000, 'grimm');
+            const wJ = lastWord(data, 'Juls'), wO = lastWord(data, 'Joe');
+            const sayWords = (wJ || wO)
+                ? `Julian sagt „${wJ || 'nichts'}“, Joe sagt „${wO || 'nichts'}“. Das ist nicht dasselbe!`
+                : 'Keiner von euch hat etwas gesagt!';
+            speak(`Die Zeit ist um. ${sayWords} Ihre Geschichten passen nicht zusammen. Abführen!`, 7000, 'grimm');
         }
         if (!data.scoreProcessed) {
             processLoss();
