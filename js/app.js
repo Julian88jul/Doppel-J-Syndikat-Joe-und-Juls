@@ -1,7 +1,7 @@
-import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261020a';
+import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261021a';
 
 // Versionsanzeige: so sieht man auf dem Handy sofort, ob die neue Version geladen wurde und in welchem Modus gespielt wird
-const APP_BUILD = '20261020a';
+const APP_BUILD = '20261021a';
 const MODE_LABELS = { firebase: 'Firebase (online)', server: 'Test-Server (WLAN)', local: 'nur dieses Gerät' };
 
 // --- CONFIG & STATE ---

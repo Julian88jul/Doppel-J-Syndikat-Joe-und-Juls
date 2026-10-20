@@ -3,13 +3,13 @@
 // Solange hier noch "Placeholder"-Werte stehen, läuft das Spiel im lokalen Modus
 // (Daten nur in diesem Browser, Tabs synchronisieren sich untereinander).
 const firebaseConfig = {
-    apiKey: "AIzaSyPlaceholderKeyForFirebaseConfig123",
+    apiKey: "AIzaSyBS2xgjI-iR0H4UX31nLIkp-eYf8vnnIy0",
     authDomain: "doppel-j-syndikat.firebaseapp.com",
     databaseURL: "https://doppel-j-syndikat-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "doppel-j-syndikat",
-    storageBucket: "doppel-j-syndikat.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef1234567890abcdef"
+    storageBucket: "doppel-j-syndikat.firebasestorage.app",
+    messagingSenderId: "507640770734",
+    appId: "1:507640770734:web:6f0b5d1b8dd6a88a5dbd3f"
 };
 
 const FIREBASE_VERSION = "10.8.0";
