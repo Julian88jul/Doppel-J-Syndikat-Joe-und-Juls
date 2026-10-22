@@ -1928,3 +1928,19 @@ body.panic-mode .vignette {
     .detectives-bg.sus-2 { transform: scale(0.75); }
     .detectives-bg.sus-3 { transform: scale(0.78); }
 }
+
+/* =====================================================
+   PANIK IN RUNDEN: kompakt, Dialog oben, Eingabe bleibt frei
+   ===================================================== */
+.panic-round-label { display: block; font-size: 0.8rem; font-weight: 700; color: #6b5a3c; margin-top: 2px; letter-spacing: 1px; }
+.panic-timer { line-height: 1.05; }
+.panic-round { font-size: 0.8rem; padding: 4px 8px; border-radius: 3px; background: rgba(198, 40, 40, 0.12); color: #8f1d1d; border-left: 3px solid #c62828; }
+
+/* Während der Panik steht die Detektiv-Sprechblase oben und klein: Sie darf die Eingabe nie verdecken */
+body.panic-mode .dialog-system { top: 62px; bottom: auto; width: min(92vw, 560px); }
+body.panic-mode #dialog-text { font-size: 0.95rem; max-height: 76px; overflow: hidden; padding: 5px 10px; line-height: 1.3; }
+body.panic-mode .verdict-stamp { display: none; }
+@media (max-width: 600px) {
+    body.panic-mode .dialog-system { top: 100px; }
+    body.panic-mode #dialog-text { font-size: 0.82rem; max-height: 62px; }
+}

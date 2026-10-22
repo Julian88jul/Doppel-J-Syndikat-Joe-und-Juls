@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Doppel-J-Syndikat - Das Verhör</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./css/style.css?v=20261022a">
+    <link rel="stylesheet" href="./css/style.css?v=20261022b">
 </head>
 <body>
 
@@ -392,12 +392,12 @@
 
                             <!-- Level 4: Die 1-Minuten-Panik -->
                             <div id="panic-section" class="panic-section hidden">
-                                <div class="panic-timer"><span id="panic-seconds">60</span><small>Sek.</small></div>
-                                <p class="panic-text">Eure Aussage ist geplatzt! Beantwortet die Frage unten so oft ihr wollt. Ihr seid frei, sobald euer <b>letztes Wort bei beiden gleich</b> ist.</p>
+                                <div class="panic-timer"><span id="panic-seconds">60</span><small>Sek.</small><span class="panic-round-label" id="panic-round-label">Runde 1</span></div>
+                                <p class="panic-text">Eure Aussage ist geplatzt! Jede Runde schickt ihr <b>beide ein Wort</b>. Seid ihr gleich, seid ihr frei. Sonst startet sofort eine neue Runde.</p>
                                 <p id="panic-question" class="panic-question"></p>
                                 <p id="panic-hidden-note" class="panic-hidden-note hidden">Dein Partner hat schon geantwortet. Gib zuerst dein eigenes Wort ein, dann siehst du seins.</p>
                                 <div class="panic-last">
-                                    <div><span>Dein letztes Wort</span><b id="panic-mine">–</b></div>
+                                    <div><span id="panic-mine-label">Dein Wort</span><b id="panic-mine">–</b></div>
                                     <div><span id="panic-partner-label">Partner</span><b id="panic-theirs">–</b></div>
                                 </div>
                                 <div id="panic-log" class="panic-log"></div>
@@ -467,6 +467,6 @@
     </div> <!-- /room-container -->
 
     <!-- Firebase v10 SDK Setup -->
-    <script type="module" src="./js/app.js?v=20261022a"></script>
+    <script type="module" src="./js/app.js?v=20261022b"></script>
 </body>
 </html>

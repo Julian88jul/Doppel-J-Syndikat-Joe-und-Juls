@@ -1,7 +1,7 @@
-import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261022a';
+import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261022b';
 
 // Versionsanzeige: so sieht man auf dem Handy sofort, ob die neue Version geladen wurde und in welchem Modus gespielt wird
-const APP_BUILD = '20261022a';
+const APP_BUILD = '20261022b';
 const MODE_LABELS = { firebase: 'Firebase (online)', server: 'Test-Server (WLAN)', local: 'nur dieses Gerät' };
 
 // --- CONFIG & STATE ---
@@ -206,6 +206,8 @@ const panicPartnerLabel = document.getElementById('panic-partner-label');
 const panicLog = document.getElementById('panic-log');
 const panicInput = document.getElementById('panic-input');
 const btnPanicSend = document.getElementById('btn-panic-send');
+const panicRoundLabel = document.getElementById('panic-round-label');
+const panicMineLabel = document.getElementById('panic-mine-label');
 const panicQuestion = document.getElementById('panic-question');
 const panicHiddenNote = document.getElementById('panic-hidden-note');
 
@@ -489,9 +491,9 @@ function updateProgressClasses() {
 let lastSuspicion = null;
 function computeSuspicion(levels) {
     let s = 15;
-    if (levels[1]) s += levels[1].ok ? -5 : 30;
-    if (levels[2]) s += levels[2].ok ? -5 : 25;
-    if (levels[3]) s += levels[3].ok ? -20 : 35;
+    // Die geheime Notiz (Stufe 2) zählt nicht: Die Kommissare wissen nichts von ihr
+    if (levels[1]) s += levels[1].ok ? -5 : 35;
+    if (levels[3]) s += levels[3].ok ? -20 : 40;
     if (levels[4] && levels[3] && !levels[3].ok) s = levels[4].ok ? 60 : 100;
     return Math.max(0, Math.min(100, s));
 }
@@ -517,12 +519,12 @@ function updateSuspicion(levels) {
 
 // Zusatz-Satz der Kommissare, der mit der Zahl der Widersprüche schärfer wird
 function suspicionRemark(level, ok) {
+    // Nur Aussagen, die die Kommissare kennen (Stufe 1, 3): die Notiz in Stufe 2 bleibt außen vor
     let prevBad = 0;
-    for (let n = 1; n < level; n++) if (lastLevels[n] && !lastLevels[n].ok) prevBad++;
+    for (let n = 1; n < level; n++) if (n !== 2 && lastLevels[n] && !lastLevels[n].ok) prevBad++;
     if (!ok) {
         if (prevBad === 0) return 'Das merke ich mir. ';
-        if (prevBad === 1) return 'Schon der zweite Widerspruch. Mein Misstrauen wächst. ';
-        return 'Widerspruch Nummer drei! Ihr redet euch um Kopf und Kragen. ';
+        return 'Schon der zweite Widerspruch! Ihr redet euch um Kopf und Kragen. ';
     }
     if (prevBad > 0) return 'Na gut, das passt. Aber den Widerspruch von vorhin habe ich nicht vergessen. ';
     return '';
@@ -1171,7 +1173,7 @@ function refreshActionBar(data, target, isSetter) {
     } else if (target === stage3) {
         text = s3[currentUserRole] ? 'Warte, welchen Gegenstand dein Partner wählt …' : 'Beweise dein Alibi: Wähle in der Akte einen der 10 Gegenstände.';
     } else if (s3.Juls && s3.Joe && s3.Juls !== s3.Joe && !data.result) {
-        text = '⏰ PANIK! Schickt Wörter, bis euer letztes Wort gleich ist!';
+        text = '⏰ PANIK! Jede Runde ein Wort. Seid ihr gleich, seid ihr frei!';
     } else {
         text = 'Das Urteil ist gefallen.';
     }
@@ -1348,19 +1350,10 @@ function updateUIBasedOnState(data) {
             if (!data.stage3 || (!data.stage3.Juls || !data.stage3.Joe)) {
                 const clueEl = document.getElementById('clue-text');
                 if (clueEl) clueEl.innerText = activeCase.clue ? `🔍 Neues Indiz: ${activeCase.clue}` : '';
-                // Die Detektive kommen zurück, vergleichen das Alibi aus der Notiz und leeren die Taschen aus
+                // Die Detektive wissen nichts von der geheimen Notiz: Sie kommen nur zurück und leeren die Taschen aus.
+                // Das Ergebnis der Notiz sehen nur die Spieler (Stempel, Akte), die Kommissare sagen dazu nichts.
                 const alibiHolds = data.stage2.word && normalizeAnswer(data.stage2.guess) === normalizeAnswer(data.stage2.word);
-                const setterName = DISPLAY_NAMES[isEvenDay ? 'Juls' : 'Joe'];
-                const guesserName = DISPLAY_NAMES[isEvenDay ? 'Joe' : 'Juls'];
-                // Erst das Ergebnis der Notiz klar ansagen, danach folgt Stufe 3
-                const resultLine = alibiHolds
-                    ? `So, da sind wir wieder. ${setterName} hatte „${data.stage2.word}“ aufgeschrieben, und ${guesserName} hat „${data.stage2.guess}“ geraten. Volltreffer! Euer Alibi deckt sich. Verdächtig gut.`
-                    : `So, da sind wir wieder. ${setterName} hatte „${data.stage2.word}“ aufgeschrieben, aber ${guesserName} hat „${data.stage2.guess}“ geraten. Daneben! Euer Alibi hat Lücken.`;
-                const fullResult = `${resultLine} ${suspicionRemark(2, !!alibiHolds)}`.trim();
-                const resultDelay = (fullResult.length + 2) * (fullResult.length + 2 > 120 ? 22 : 40) + 3500;
-                sayOnce('s2result', fullResult, 3500, activeCase.speaker);
-                sayOnce('s3intro', `Wir haben etwas gefunden: ${activeCase.clue} Sie bestreiten die Tat? Dann beweisen Sie Ihr Alibi. Wir haben Ihre Taschen geleert, alles liegt auf dem Tisch. ${story(activeCase.q3, data)}`, 12000, activeCase.speaker, resultDelay);
-                if (!spoken.s2stamp) {
+                sayOnce('s3intro', `So, da sind wir wieder. Wir haben etwas gefunden: ${activeCase.clue} Sie bestreiten die Tat? Dann beweisen Sie Ihr Alibi. Wir haben Ihre Taschen geleert, alles liegt auf dem Tisch. ${story(activeCase.q3, data)}`, 12000, activeCase.speaker);                if (!spoken.s2stamp) {
                     spoken.s2stamp = true;
                     playSound(alibiHolds ? 'win' : 'lose');
                     showVerdictStamp(alibiHolds ? 'TREFFER!' : 'DANEBEN!', alibiHolds ? 'win' : 'lose');
@@ -1504,17 +1497,6 @@ function panicTimes(data) {
     return { start, end: start + PANIC_SECONDS * 1000 };
 }
 
-function lastWord(data, role) {
-    const entry = data.panic && data.panic[role];
-    return entry && entry.word ? entry.word : '';
-}
-
-function panicIsMatch(data) {
-    const a = normalizeAnswer(lastWord(data, 'Juls'));
-    const b = normalizeAnswer(lastWord(data, 'Joe'));
-    return a.length > 0 && a === b;
-}
-
 function evaluateFinal(data) {
     resJuls.innerText = itemLabel(data.stage3.Juls);
     resJoe.innerText = itemLabel(data.stage3.Joe);
@@ -1537,6 +1519,61 @@ function evaluateFinal(data) {
     runPanic(data);
 }
 
+// --- PANIK IN RUNDEN ---
+// Pro Runde schickt jeder ein Wort (bis beide gesendet haben, darf man es noch ändern). Erst wenn BEIDE
+// in derselben Runde ein Wort haben, wird verglichen: gleich = frei, verschieden = nächste Runde, alles neu.
+// Alte Wörter aus früheren Runden zählen nie. Datenbank: panic/round (Zahl) und panic/w/r<N>/<Rolle> = {word, ts}.
+function panicRound(data) { return (data.panic && Number(data.panic.round)) || 1; }
+function roundWord(data, n, role) {
+    const e = data.panic && data.panic.w && data.panic.w[`r${n}`] && data.panic.w[`r${n}`][role];
+    return e && e.word ? e.word : '';
+}
+
+// Letztes Wort, das jemand gesendet hat (für Rückblick und Ansagen)
+function lastWord(data, role) {
+    const w = (data.panic && data.panic.w) || {};
+    const rounds = Object.keys(w).map(k => Number(k.slice(1))).filter(Number.isFinite).sort((a, b) => b - a);
+    for (const n of rounds) { const word = roundWord(data, n, role); if (word) return word; }
+    return '';
+}
+
+// Ein Treffer zählt nur, wenn beide in DERSELBEN Runde dasselbe Wort gesendet haben
+function panicIsMatch(data) {
+    const w = (data.panic && data.panic.w) || {};
+    return Object.keys(w).some(k => {
+        const n = Number(k.slice(1));
+        const a = normalizeAnswer(roundWord(data, n, 'Juls'));
+        const b = normalizeAnswer(roundWord(data, n, 'Joe'));
+        return a.length > 0 && a === b;
+    });
+}
+
+// Haben beide in der laufenden Runde etwas gesendet und es passt nicht, beginnt die nächste Runde
+const advancingRound = {};
+function maybeAdvanceRound(data) {
+    const n = panicRound(data);
+    const a = normalizeAnswer(roundWord(data, n, 'Juls'));
+    const b = normalizeAnswer(roundWord(data, n, 'Joe'));
+    if (!a || !b || a === b || advancingRound[n] || data.result) return;
+    advancingRound[n] = true;
+    // Außerhalb des laufenden Firebase-Ereignisses schreiben: Ein Schreibvorgang mitten im Ereignis meldet sich
+    // sonst nicht bei der eigenen Seite zurück (Datenbank hat Runde n+1, die Anzeige bliebe auf Runde n stehen).
+    setTimeout(() => {
+        updateWithTimeout(ref(db, `daily/${currentDayStr}/panic`), { round: n + 1 })
+            .then(() => {
+                // Zur Sicherheit die Runde auch lokal setzen, falls das Ereignis ausbleibt
+                if (lastPanicData && panicRound(lastPanicData) === n && !lastPanicData.result) {
+                    const patched = JSON.parse(JSON.stringify(lastPanicData));
+                    patched.panic = patched.panic || {};
+                    patched.panic.round = n + 1;
+                    lastPanicData = patched;
+                    runPanic(patched);
+                }
+            })
+            .catch(() => { advancingRound[n] = false; });
+    }, 0);
+}
+
 function runPanic(data) {
     document.getElementById('result-title').innerText = 'ROTER ALARM: Die Aussage ist geplatzt!';
     panicSection.classList.remove('hidden');
@@ -1547,19 +1584,31 @@ function runPanic(data) {
         autoShown.final = 'alarm';
         playSound('alarm');
         shakeScreen();
-        showVerdictStamp('GEPLATZT!', 'lose');
-        const itemJ = itemById(data.stage3.Juls), itemO = itemById(data.stage3.Joe);
-        speak(`Julian sagt „${itemJ ? itemJ.name : data.stage3.Juls}“, Joe sagt „${itemO ? itemO.name : data.stage3.Joe}“. Das passt nicht zusammen! ${suspicionRemark(3, false)}Eure Aussage ist geplatzt, ROTER ALARM! Ihr habt eine Minute, beantwortet beide: ${story(activeCase.q4, data)}`, 9000, 'grimm');
+        // Kurz halten, damit die Eingabe nicht verdeckt wird. Wörter und Frage stehen im Panik-Bereich.
+        speak(`${suspicionRemark(3, false)}ROTER ALARM! Das passt nicht zusammen! Ihr habt eine Minute.`.trim(), 3500, 'grimm');
     }
 
-    // Eigene und Partnerwörter anzeigen. Das Wort des Partners bleibt verdeckt, bis man selbst eins abgeschickt hat.
+    maybeAdvanceRound(data);
+
+    // Eigenes Wort und das des Partners in der laufenden Runde. Das des Partners bleibt verdeckt, bis man selbst eins gesendet hat.
     const partner = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
-    const iSent = !!lastWord(data, currentUserRole);
-    const theirWord = lastWord(data, partner);
-    panicPartnerLabel.innerText = `${DISPLAY_NAMES[partner]}s letztes Wort`;
-    panicMine.innerText = lastWord(data, currentUserRole) || '–';
-    panicTheirs.innerText = iSent ? (theirWord || '–') : (theirWord ? '✉ …' : '–');
-    panicHiddenNote.classList.toggle('hidden', iSent || !theirWord);
+    const n = panicRound(data);
+    const mine = roundWord(data, n, currentUserRole);
+    const theirs = roundWord(data, n, partner);
+    panicRoundLabel.innerText = `Runde ${n}`;
+    panicMineLabel.innerText = 'Dein Wort';
+    panicPartnerLabel.innerText = `${DISPLAY_NAMES[partner]}s Wort`;
+    panicMine.innerText = mine || '–';
+    panicTheirs.innerText = theirs ? (mine ? theirs : '✉ …') : '–';
+    if (!mine && theirs) {
+        panicHiddenNote.textContent = `${DISPLAY_NAME_OF(partner)} hat schon geantwortet. Gib zuerst dein eigenes Wort ein, dann siehst du seins.`;
+        panicHiddenNote.classList.remove('hidden');
+    } else if (mine && !theirs) {
+        panicHiddenNote.textContent = `Dein Wort ist raus. Warte auf ${DISPLAY_NAME_OF(partner)} …`;
+        panicHiddenNote.classList.remove('hidden');
+    } else {
+        panicHiddenNote.classList.add('hidden');
+    }
     renderPanicLog(data);
 
     if (!panicInterval) {
@@ -1567,69 +1616,80 @@ function runPanic(data) {
         panicTick();
     }
 }
+function DISPLAY_NAME_OF(role) { return DISPLAY_NAMES[role]; }
 
+// Verlauf: abgeschlossene Runden mit beiden Wörtern, dazu der Stand der laufenden Runde
 function renderPanicLog(data) {
-    const allLog = (data.panic && data.panic.log) ? Object.entries(data.panic.log) : [];
-    allLog.sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0) || a[0].localeCompare(b[0]));
-    // Wörter des Partners sieht man erst, wenn man selbst eins abgeschickt hat
-    const iSent = !!lastWord(data, currentUserRole);
-    const log = iSent ? allLog : allLog.filter(([, e]) => e.role === currentUserRole);
-    const known = panicLog.querySelectorAll('.panic-msg:not(.masked)').length;
-    // Nur neu zeichnen, wenn sich etwas geändert hat (Anzahl der Wörter oder ob ich schon geantwortet habe)
-    const renderKey = `${iSent}|${log.length}|${allLog.length}`;
-    if (renderKey === panicRenderKey) {
-        panicLogSeen = allLog.length;
-        return;
+    const partner = currentUserRole === 'Juls' ? 'Joe' : 'Juls';
+    const n = panicRound(data);
+    const mine = roundWord(data, n, currentUserRole);
+    const theirs = roundWord(data, n, partner);
+    const renderKey = `${n}|${mine}|${theirs ? (mine ? theirs : '?') : ''}`;
+
+    // Neue Runde = die letzte ging schief: Kommissare haken nach (beim ersten Laden nicht)
+    if (panicPrevRound !== null && n > panicPrevRound) {
+        playSound('creak');
+        doubtAfterRound(data, n - 1);
     }
+    // Partner hat etwas gesendet: kurzer Ton, auch wenn das Wort noch verdeckt ist
+    if (panicPrevRound !== null && theirs && !panicPrevTheirs) playSound('pop');
+    panicPrevRound = n;
+    panicPrevTheirs = !!theirs;
+
+    if (renderKey === panicRenderKey) return;
     panicRenderKey = renderKey;
+
     panicLog.innerHTML = '';
-    if (!iSent && allLog.length) {
+    for (let k = 1; k < n; k++) {
+        const a = roundWord(data, k, 'Juls');
+        const b = roundWord(data, k, 'Joe');
+        if (!a && !b) continue;
+        const row = document.createElement('div');
+        row.className = 'panic-round bad';
+        row.textContent = `Runde ${k}: ${DISPLAY_NAMES.Juls} „${a || '–'}“ · ${DISPLAY_NAMES.Joe} „${b || '–'}“ ✘`;
+        panicLog.appendChild(row);
+    }
+    const addBubble = (cls, who, word) => {
+        const line = document.createElement('div');
+        line.className = `panic-msg ${cls}`;
+        line.innerHTML = '<span class="who"></span><span class="word"></span>';
+        line.querySelector('.who').textContent = who;
+        line.querySelector('.word').textContent = word;
+        panicLog.appendChild(line);
+    };
+    if (mine) addBubble('mine', 'Du', mine);
+    if (theirs && mine) addBubble('theirs', DISPLAY_NAMES[partner], theirs);
+    if (theirs && !mine) {
         const hidden = document.createElement('div');
         hidden.className = 'panic-msg theirs masked';
-        hidden.textContent = '✉ Dein Partner hat schon geantwortet …';
+        hidden.textContent = `✉ ${DISPLAY_NAMES[partner]} hat schon geantwortet …`;
         panicLog.appendChild(hidden);
     }
-    log.forEach(([, e]) => {
-        const line = document.createElement('div');
-        line.className = `panic-msg ${e.role === currentUserRole ? 'mine' : 'theirs'}`;
-        line.innerHTML = `<span class="who"></span><span class="word"></span>`;
-        line.querySelector('.who').textContent = e.role === currentUserRole ? 'Du' : DISPLAY_NAMES[e.role];
-        line.querySelector('.word').textContent = e.word;
-        panicLog.appendChild(line);
-    });
     panicLog.scrollTop = panicLog.scrollHeight;
-    // Neues Wort vom Partner: kurzer Ton (nur sichtbar, wenn man selbst schon geantwortet hat)
-    const newest = log[log.length - 1];
-    if (iSent && log.length > known && newest && newest[1].role !== currentUserRole) playSound('pop');
-
-    // Die Detektive haken nach, wenn beide ein Wort haben, die Wörter aber nicht zusammenpassen
-    // (beim ersten Laden der Seite nicht, sonst würden alte Wörter erneut kommentiert)
-    if (panicLogSeen !== null && allLog.length > panicLogSeen && iSent) doubtIfMismatch(data);
-    panicLogSeen = allLog.length;
 }
 
 let panicRenderKey = null;
-let panicLogSeen = null;
+let panicPrevRound = null;
+let panicPrevTheirs = false;
 let lastDoubtAt = 0;
 let lastDoubtIndex = -1;
-const DOUBT_LINES = [
-    "Das hat so nicht ganz gestimmt. Sind Sie sich sicher?",
-    "Hmm. Zwei verschiedene Wörter. Sind Sie sich da wirklich sicher?",
-    "Das klingt nicht nach derselben Geschichte. Überlegen Sie noch einmal.",
-    "Ihre Wörter passen nicht zusammen. Sicher, dass Sie die Wahrheit sagen?",
-    "Aha. Der eine sagt so, der andere so. Sind Sie sich sicher?"
-];
-function doubtIfMismatch(data) {
-    const a = normalizeAnswer(lastWord(data, 'Juls'));
-    const b = normalizeAnswer(lastWord(data, 'Joe'));
-    if (!a || !b || a === b) return;                         // noch kein Vergleich möglich oder schon gleich
-    if (data.result) return;                                  // Spiel ist vorbei
-    if (Date.now() - lastDoubtAt < 6000) return;              // nicht bei jedem Wort, sonst nervt es
+function doubtAfterRound(data, doneRound) {
+    if (data.result) return;
+    if (Date.now() - lastDoubtAt < 4000) return; // nicht bei jeder Runde, sonst nervt es
+    const a = roundWord(data, doneRound, 'Juls') || '…';
+    const b = roundWord(data, doneRound, 'Joe') || '…';
+    const lines = [
+        `Das hat so nicht ganz gestimmt. „${a}“ gegen „${b}“. Sind Sie sich sicher?`,
+        `Hmm. „${a}“ und „${b}“ passen nicht zusammen. Überlegen Sie noch einmal.`,
+        `Der eine sagt „${a}“, der andere „${b}“. Sind Sie sich da wirklich sicher?`,
+        'Ihre Wörter passen nicht zusammen. Sicher, dass Sie die Wahrheit sagen?',
+        'Aha. Zwei verschiedene Geschichten. Neue Runde, neues Glück.'
+    ];
     lastDoubtAt = Date.now();
     let idx;
-    do { idx = Math.floor(Math.random() * DOUBT_LINES.length); } while (idx === lastDoubtIndex && DOUBT_LINES.length > 1);
+    do { idx = Math.floor(Math.random() * lines.length); } while (idx === lastDoubtIndex && lines.length > 1);
     lastDoubtIndex = idx;
-    speak(DOUBT_LINES[idx], 3500);
+    speak(lines[idx], 3000);
 }
 
 function panicTick() {
@@ -1645,7 +1705,7 @@ function panicTick() {
     panicInput.disabled = !running;
     btnPanicSend.disabled = !running;
     if (now < start) panicInput.placeholder = 'Gleich geht\'s los...';
-    else if (running) panicInput.placeholder = 'Deine Antwort + Enter';
+    else if (running) panicInput.placeholder = 'Dein Wort + Enter';
 
     // Ticken jede Sekunde, in den letzten 10 Sekunden doppelt
     if (running && secondsLeft !== lastTickSecond) {
@@ -1670,21 +1730,18 @@ function stopPanic() {
     btnPanicSend.disabled = true;
 }
 
-// Level 4: Wort absenden (unbegrenzt oft)
+// Level 4: Wort für die laufende Runde senden (vor dem Vergleich darf man es noch ändern)
 btnPanicSend.addEventListener('click', () => {
     const word = panicInput.value.trim();
-    if (!word || btnPanicSend.disabled) return;
-    const ts = Date.now();
+    if (!word || btnPanicSend.disabled || !lastPanicData) return;
+    const n = panicRound(lastPanicData);
     panicInput.value = '';
     panicInput.focus();
     playSound('typewriter');
     panicMine.innerText = word;
 
-    const base = `daily/${currentDayStr}/panic`;
-    Promise.all([
-        updateWithTimeout(ref(db, base), { [currentUserRole]: { word, ts } }),
-        updateWithTimeout(ref(db, `${base}/log`), { [`${ts}_${currentUserRole}`]: { role: currentUserRole, word, ts } })
-    ]).catch(err => console.warn('Wort konnte nicht gesendet werden', err));
+    updateWithTimeout(ref(db, `daily/${currentDayStr}/panic/w/r${n}`), { [currentUserRole]: { word, ts: Date.now() } })
+        .catch(err => console.warn('Wort konnte nicht gesendet werden', err));
 });
 
 async function restartToday() {
