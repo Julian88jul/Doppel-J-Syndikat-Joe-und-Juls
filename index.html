@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Doppel-J-Syndikat - Das Verhör</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./css/style.css?v=20261022b">
+    <link rel="stylesheet" href="./css/style.css?v=20261022c">
 </head>
 <body>
 
@@ -275,6 +275,18 @@
             <!-- Countdown der 1-Minuten-Panik (immer sichtbar, auch bei geschlossener Akte) -->
             <div id="panic-hud" class="panic-hud hidden">⏰ <span id="panic-hud-seconds">60</span></div>
 
+            <!-- Die beiden Kommissare als kleine Porträts neben der geöffneten Akte (am Handy als Leiste oben).
+                 Sie rücken näher, je misstrauischer sie werden. Die Köpfe kopiert das Skript aus der Szene. -->
+            <div id="watchers" class="watchers sus-0" aria-label="Misstrauen der Kommissare">
+                <div class="watcher grimm" id="watcher-grimm"></div>
+                <div class="watchers-meter">
+                    <span class="w-title">Misstrauen</span>
+                    <div class="sus-bar"><i id="w-fill"></i></div>
+                    <span class="w-label" id="w-label">ruhig</span>
+                </div>
+                <div class="watcher schatten" id="watcher-schatten"></div>
+            </div>
+
             <!-- Dashboard: Streak & Rank -->
             <div id="stats-board" class="stats-board hidden">
                 <div>Streak: <span id="streak-count">0</span> Tage</div>
@@ -467,6 +479,6 @@
     </div> <!-- /room-container -->
 
     <!-- Firebase v10 SDK Setup -->
-    <script type="module" src="./js/app.js?v=20261022b"></script>
+    <script type="module" src="./js/app.js?v=20261022c"></script>
 </body>
 </html>

@@ -1944,3 +1944,91 @@ body.panic-mode .verdict-stamp { display: none; }
     body.panic-mode .dialog-system { top: 100px; }
     body.panic-mode #dialog-text { font-size: 0.82rem; max-height: 62px; }
 }
+
+/* =====================================================
+   KOMMISSARE NEBEN DER AKTE + DEUTLICHERES NÄHERRÜCKEN
+   ===================================================== */
+/* Große Figuren in der Szene: spürbarere Schritte, dazu ein Vorbeugen */
+.detectives-bg.sus-1 { transform: scale(1.1) translateY(4px); }
+.detectives-bg.sus-2 { transform: scale(1.2) translateY(9px); }
+.detectives-bg.sus-3 { transform: scale(1.32) translateY(15px); }
+@media (max-width: 600px) {
+    .detectives-bg.sus-1 { transform: scale(0.76) translateY(3px); }
+    .detectives-bg.sus-2 { transform: scale(0.83) translateY(7px); }
+    .detectives-bg.sus-3 { transform: scale(0.92) translateY(12px); }
+}
+
+/* Porträts: nur sichtbar, solange die Akte offen ist */
+.watchers { display: none; z-index: 1400; pointer-events: none; }
+body:has(#open-file-modal:not(.hidden)) .watchers { display: flex; }
+
+.watcher {
+    position: relative;
+    width: 76px; height: 82px;
+    border-radius: 50% 50% 8px 8px / 42% 42% 8px 8px;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 30%, #3a2f22, #0b0907);
+    border: 2px solid #6b5636;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.8), inset 0 0 14px rgba(0,0,0,0.7);
+    transform-origin: 50% 100%;
+    transition: transform 0.7s cubic-bezier(.2,1.4,.4,1), border-color 0.7s, box-shadow 0.7s;
+}
+.watcher svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.watcher::after { /* roter Schein, der mit dem Misstrauen zunimmt */
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, rgba(255, 40, 30, 0), rgba(255, 40, 30, 0.55));
+    opacity: 0; transition: opacity 0.7s;
+}
+
+.watchers-meter { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--amber); font-size: 0.72rem; text-align: center; }
+.w-title { letter-spacing: 1px; text-transform: uppercase; font-size: 0.62rem; opacity: 0.8; }
+.w-label { font-weight: 700; }
+.watchers-meter .sus-bar { width: 100%; min-width: 64px; height: 10px; background: rgba(255,255,255,0.15); }
+.watchers-meter .sus-bar i { height: 100%; }
+
+/* je misstrauischer, desto größer, näher und rötlicher */
+.watchers.sus-1 .watcher { transform: scale(1.12); border-color: #a07a3a; }
+.watchers.sus-2 .watcher { transform: scale(1.26); border-color: #c4583a; }
+.watchers.sus-3 .watcher { transform: scale(1.42); border-color: #ff4a3a; box-shadow: 0 6px 22px rgba(255,40,30,0.55), inset 0 0 14px rgba(0,0,0,0.7); }
+.watchers.sus-1 .watcher::after { opacity: 0.25; }
+.watchers.sus-2 .watcher::after { opacity: 0.55; }
+.watchers.sus-3 .watcher::after { opacity: 0.9; }
+.watchers.sus-2 .det-eyes, .watchers.sus-3 .det-eyes { filter: brightness(1.6); }
+.watchers.lunge .watcher { animation: lunge 0.5s ease-out; }
+@keyframes lunge { 0% { translate: 0 0; } 35% { translate: 0 -8px; } 100% { translate: 0 0; } }
+
+/* Große Bildschirme: Porträts als Seitenleiste links neben der Akte */
+@media (min-width: 760px) {
+    .watchers {
+        position: fixed; left: 14px; top: 50%; transform: translateY(-50%);
+        flex-direction: column; align-items: center; gap: 14px; width: 108px;
+    }
+    .watchers-meter { order: 2; width: 100%; }
+    .watcher.grimm { order: 1; }
+    .watcher.schatten { order: 3; }
+}
+/* Schmale Bildschirme: schmale Leiste oben, über der Akte */
+@media (max-width: 759px) {
+    .watchers {
+        position: fixed; left: 8px; right: 8px; top: 104px;
+        flex-direction: row; align-items: flex-end; gap: 10px;
+        padding: 2px 6px 0; height: 56px;
+    }
+    .watcher { width: 46px; height: 50px; flex: none; }
+    .watchers-meter { flex: 1; align-self: center; font-size: 0.66rem; }
+    .w-title { display: none; }
+    .file-modal { padding-top: 168px; }
+    .watchers.sus-1 .watcher { transform: scale(1.1); }
+    .watchers.sus-2 .watcher { transform: scale(1.2); }
+    .watchers.sus-3 .watcher { transform: scale(1.3); }
+}
+@media (max-width: 600px) { .file-modal { padding-top: 168px; } }
+.watchers-meter { position: relative; z-index: 3; }
+@media (min-width: 760px) { .watchers { gap: 30px; } }
+@media (max-width: 759px) {
+    /* Sprechblase endet über der Porträt-Leiste (Leiste ab y=104) */
+    .dialog-system, body:has(.file-modal:not(.hidden)) .dialog-system, body:has(.scrap-modal:not(.hidden)) .dialog-system { top: 46px; }
+    #dialog-text { max-height: 56px; font-size: 0.8rem; line-height: 1.25; }
+    body.panic-mode .dialog-system { top: 46px; }
+    body.panic-mode #dialog-text { max-height: 56px; font-size: 0.8rem; }
+}

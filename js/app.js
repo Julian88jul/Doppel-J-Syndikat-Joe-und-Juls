@@ -1,7 +1,7 @@
-import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261022b';
+import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261022c';
 
 // Versionsanzeige: so sieht man auf dem Handy sofort, ob die neue Version geladen wurde und in welchem Modus gespielt wird
-const APP_BUILD = '20261022b';
+const APP_BUILD = '20261022c';
 const MODE_LABELS = { firebase: 'Firebase (online)', server: 'Test-Server (WLAN)', local: 'nur dieses Gerät' };
 
 // --- CONFIG & STATE ---
@@ -489,6 +489,23 @@ function updateProgressClasses() {
 // --- MISSTRAUEN DER KOMMISSARE ---
 // Steigt mit jedem Widerspruch, sinkt leicht bei Übereinstimmung. Sichtbar oben in der Statistik.
 let lastSuspicion = null;
+let lastStep = 0;
+
+// Porträts der Kommissare aus den großen Figuren der Szene kopieren (nur Kopf und Schultern)
+function buildWatchers() {
+    [['grimm', 'watcher-grimm'], ['schatten', 'watcher-schatten']].forEach(([who, id]) => {
+        const src = document.querySelector(`.detective.${who} svg`);
+        const target = document.getElementById(id);
+        if (!src || !target || target.firstChild) return;
+        const clone = src.cloneNode(true);
+        clone.removeAttribute('aria-label');
+        clone.setAttribute('viewBox', '30 30 160 175'); // Kopf und Schultern
+        clone.querySelectorAll('defs').forEach(d => d.remove()); // Verläufe kommen aus dem Original im Dokument
+        target.appendChild(clone);
+    });
+}
+buildWatchers();
+
 function computeSuspicion(levels) {
     let s = 15;
     // Die geheime Notiz (Stufe 2) zählt nicht: Die Kommissare wissen nichts von ihr
@@ -504,10 +521,23 @@ function updateSuspicion(levels) {
     fill.style.background = `hsl(${Math.round(120 - s * 1.2)}, 70%, 45%)`;
     const label = s < 30 ? 'ruhig' : s < 55 ? 'skeptisch' : s < 80 ? 'misstrauisch' : 'kurz vorm Platzen';
     document.getElementById('sus-text').textContent = label;
-    // Die Kommissare rücken mit steigendem Misstrauen sichtbar näher
+    // Die Kommissare rücken mit steigendem Misstrauen sichtbar näher: groß in der Szene und als Porträts neben der Akte
     const step = s < 30 ? 0 : s < 55 ? 1 : s < 80 ? 2 : 3;
     detectivesBg.classList.remove('sus-0', 'sus-1', 'sus-2', 'sus-3');
     detectivesBg.classList.add(`sus-${step}`);
+    const watchers = document.getElementById('watchers');
+    watchers.classList.remove('sus-0', 'sus-1', 'sus-2', 'sus-3');
+    watchers.classList.add(`sus-${step}`);
+    const wFill = document.getElementById('w-fill');
+    wFill.style.width = `${s}%`;
+    wFill.style.background = fill.style.background;
+    document.getElementById('w-label').textContent = label;
+    if (lastSuspicion !== null && step > lastStep) {
+        watchers.classList.remove('lunge');
+        void watchers.offsetWidth;
+        watchers.classList.add('lunge'); // kurzer Ruck nach vorn, wenn sie misstrauischer werden
+    }
+    lastStep = step;
     if (lastSuspicion !== null && s > lastSuspicion) {
         const box = document.getElementById('suspicion');
         box.classList.remove('rising');
