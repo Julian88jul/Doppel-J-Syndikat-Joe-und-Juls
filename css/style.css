@@ -1896,3 +1896,35 @@ body.panic-mode .vignette {
     font-style: italic;
 }
 .panic-msg.masked { background: #e8dfc7; color: #6b5a3c; border: 1px dashed #9a8a6a; font-style: italic; }
+
+/* =====================================================
+   MISSTRAUEN DER KOMMISSARE
+   ===================================================== */
+.suspicion { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 0.78rem; }
+.sus-label { white-space: nowrap; }
+.sus-bar { flex: 1; min-width: 60px; height: 8px; background: rgba(255,255,255,0.12); border-radius: 4px; overflow: hidden; }
+.sus-bar i { display: block; height: 100%; width: 15%; background: hsl(102, 70%, 45%); border-radius: 4px; transition: width 0.8s ease, background 0.8s ease; }
+.sus-text { min-width: 5.5em; text-align: right; font-weight: 700; }
+.suspicion.rising { animation: susPulse 0.9s ease-out; }
+@keyframes susPulse {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.08); color: #ff6a5a; }
+    100% { transform: scale(1); }
+}
+
+/* Je misstrauischer, desto näher rücken die Kommissare und desto heller glühen die Augen */
+.detectives-bg { transition: transform 1.2s ease; transform-origin: bottom center; }
+.detectives-bg.sus-1 { transform: scale(1.03); }
+.detectives-bg.sus-2 { transform: scale(1.07); }
+.detectives-bg.sus-3 { transform: scale(1.11); }
+.detectives-bg.sus-2 .det-eyes, .detectives-bg.sus-3 .det-eyes { filter: brightness(1.5); }
+.detectives-bg.sus-3 .grimm .det-eyes { filter: brightness(1.9) drop-shadow(0 0 6px #ff3a1a); }
+
+@media (max-width: 600px) {
+    .suspicion { flex-basis: 100%; font-size: 0.68rem; margin-top: 2px; }
+    /* Auf dem Handy sind die Kommissare kleiner skaliert; die Steigerung bleibt relativ */
+    .detectives-bg { transform: scale(0.7); }
+    .detectives-bg.sus-1 { transform: scale(0.72); }
+    .detectives-bg.sus-2 { transform: scale(0.75); }
+    .detectives-bg.sus-3 { transform: scale(0.78); }
+}

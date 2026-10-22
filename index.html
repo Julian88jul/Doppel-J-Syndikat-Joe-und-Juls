@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Doppel-J-Syndikat - Das Verhör</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./css/style.css?v=20261021b">
+    <link rel="stylesheet" href="./css/style.css?v=20261022a">
 </head>
 <body>
 
@@ -279,7 +279,13 @@
             <div id="stats-board" class="stats-board hidden">
                 <div>Streak: <span id="streak-count">0</span> Tage</div>
                 <div>Rang: <span id="gangster-rank">Kaugummi-Dieb</span></div>
-                <button id="reset-btn" class="reset-btn hidden" title="Heutiges Verhör neu starten (nur lokaler Modus)">↺ Neues Verhör</button>
+                <!-- Wie misstrauisch sind die Kommissare? Steigt bei jedem Widerspruch -->
+                <div class="suspicion" id="suspicion" title="Misstrauen der Kommissare">
+                    <span class="sus-label">🕵️ Misstrauen</span>
+                    <div class="sus-bar"><i id="sus-fill"></i></div>
+                    <span class="sus-text" id="sus-text">ruhig</span>
+                </div>
+                <button id="reset-btn" class="reset-btn hidden" title="Heutiges Verhör neu starten">↺ Neues Verhör</button>
             </div>
 
             <main class="main-content">
@@ -461,6 +467,6 @@
     </div> <!-- /room-container -->
 
     <!-- Firebase v10 SDK Setup -->
-    <script type="module" src="./js/app.js?v=20261021b"></script>
+    <script type="module" src="./js/app.js?v=20261022a"></script>
 </body>
 </html>

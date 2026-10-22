@@ -1,7 +1,7 @@
-import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261021b';
+import { db, ref, set, get, onValue, update, isLocalMode, syncMode } from './firebase-config.js?v=20261022a';
 
 // Versionsanzeige: so sieht man auf dem Handy sofort, ob die neue Version geladen wurde und in welchem Modus gespielt wird
-const APP_BUILD = '20261021b';
+const APP_BUILD = '20261022a';
 const MODE_LABELS = { firebase: 'Firebase (online)', server: 'Test-Server (WLAN)', local: 'nur dieses Gerät' };
 
 // --- CONFIG & STATE ---
@@ -245,14 +245,14 @@ function init() {
         el.textContent = `Version ${APP_BUILD} · Modus: ${MODE_LABELS[syncMode] || syncMode}`;
     });
 
-    if (isLocalMode) {
-        // Neustart-Knöpfe: Kopfzeile im Spiel und gut sichtbar schon auf der Rollenwahl
-        ['reset-btn', 'reset-start'].forEach(id => {
-            const btn = document.getElementById(id);
-            btn.classList.remove('hidden');
-            btn.addEventListener('click', restartToday);
-        });
+    // Neustart-Knöpfe in allen Modi (auch Firebase): Kopfzeile im Spiel und auf der Rollenwahl
+    ['reset-btn', 'reset-start'].forEach(id => {
+        const btn = document.getElementById(id);
+        btn.classList.remove('hidden');
+        btn.addEventListener('click', restartToday);
+    });
 
+    if (isLocalMode) {
         const banner = document.createElement('div');
         banner.className = 'local-banner';
         banner.innerText = syncMode === 'server'
@@ -396,7 +396,7 @@ function levelResults(data) {
     if (s2.word && s2.guess) {
         const ok = normalizeAnswer(s2.guess) === normalizeAnswer(s2.word);
         res[2] = {
-            ok, q: activeCase.q2,
+            ok, q: story(activeCase.q2, data),
             note: ok ? 'Die Alibi-Antwort wurde erraten.' : 'Die Alibi-Antwort wurde nicht erraten.',
             boxes: [[`${DISPLAY_NAMES[setter]} schrieb`, `${s2.word}${s2.emoji ? ' ' + s2.emoji : ''}`], [`${DISPLAY_NAMES[guesser]} riet`, s2.guess]]
         };
@@ -405,7 +405,7 @@ function levelResults(data) {
     if (s3.Juls && s3.Joe) {
         const ok = s3.Juls === s3.Joe;
         res[3] = {
-            ok, q: activeCase.q3,
+            ok, q: story(activeCase.q3, data),
             note: ok ? 'Derselbe Gegenstand: Das Alibi hält.' : 'Verschiedene Gegenstände: Die Aussage ist geplatzt.',
             boxes: [[DISPLAY_NAMES.Juls, itemLabel(s3.Juls)], [DISPLAY_NAMES.Joe, itemLabel(s3.Joe)]]
         };
@@ -414,7 +414,7 @@ function levelResults(data) {
         } else if (data.result) {
             const wasOk = data.result === 'win';
             res[4] = {
-                ok: wasOk, q: activeCase.q4,
+                ok: wasOk, q: story(activeCase.q4, data),
                 note: wasOk ? 'Im letzten Moment dasselbe Wort.' : 'Die Minute ist ohne gleiches Wort abgelaufen.',
                 boxes: [[DISPLAY_NAMES.Juls + ' (letztes Wort)', lastWord(data, 'Juls') || '–'], [DISPLAY_NAMES.Joe + ' (letztes Wort)', lastWord(data, 'Joe') || '–']]
             };
@@ -484,10 +484,55 @@ function updateProgressClasses() {
     });
 }
 
+// --- MISSTRAUEN DER KOMMISSARE ---
+// Steigt mit jedem Widerspruch, sinkt leicht bei Übereinstimmung. Sichtbar oben in der Statistik.
+let lastSuspicion = null;
+function computeSuspicion(levels) {
+    let s = 15;
+    if (levels[1]) s += levels[1].ok ? -5 : 30;
+    if (levels[2]) s += levels[2].ok ? -5 : 25;
+    if (levels[3]) s += levels[3].ok ? -20 : 35;
+    if (levels[4] && levels[3] && !levels[3].ok) s = levels[4].ok ? 60 : 100;
+    return Math.max(0, Math.min(100, s));
+}
+function updateSuspicion(levels) {
+    const s = computeSuspicion(levels);
+    const fill = document.getElementById('sus-fill');
+    fill.style.width = `${s}%`;
+    fill.style.background = `hsl(${Math.round(120 - s * 1.2)}, 70%, 45%)`;
+    const label = s < 30 ? 'ruhig' : s < 55 ? 'skeptisch' : s < 80 ? 'misstrauisch' : 'kurz vorm Platzen';
+    document.getElementById('sus-text').textContent = label;
+    // Die Kommissare rücken mit steigendem Misstrauen sichtbar näher
+    const step = s < 30 ? 0 : s < 55 ? 1 : s < 80 ? 2 : 3;
+    detectivesBg.classList.remove('sus-0', 'sus-1', 'sus-2', 'sus-3');
+    detectivesBg.classList.add(`sus-${step}`);
+    if (lastSuspicion !== null && s > lastSuspicion) {
+        const box = document.getElementById('suspicion');
+        box.classList.remove('rising');
+        void box.offsetWidth; // Animation neu starten
+        box.classList.add('rising');
+    }
+    lastSuspicion = s;
+}
+
+// Zusatz-Satz der Kommissare, der mit der Zahl der Widersprüche schärfer wird
+function suspicionRemark(level, ok) {
+    let prevBad = 0;
+    for (let n = 1; n < level; n++) if (lastLevels[n] && !lastLevels[n].ok) prevBad++;
+    if (!ok) {
+        if (prevBad === 0) return 'Das merke ich mir. ';
+        if (prevBad === 1) return 'Schon der zweite Widerspruch. Mein Misstrauen wächst. ';
+        return 'Widerspruch Nummer drei! Ihr redet euch um Kopf und Kragen. ';
+    }
+    if (prevBad > 0) return 'Na gut, das passt. Aber den Widerspruch von vorhin habe ich nicht vergessen. ';
+    return '';
+}
+
 let lastProgressData = null;
 function updateProgress(data) {
     lastProgressData = data;
     lastLevels = levelResults(data);
+    updateSuspicion(lastLevels);
     updateProgressClasses();
     if (reviewLevel !== null) renderReview();
 
@@ -666,7 +711,10 @@ function shakeScreen() {
 // --- GAME LOGIC ---
 
 // type 'personal': feste Ziel-Antwort (targets), type 'general': beide müssen dasselbe Wort tippen
-const CASES_VERSION = 3; // 3: Alibi-Fragen für Level 3
+// Aufbau jedes Falls als Verhör: Tatvorwurf (desc) -> wo wart ihr? (q1) -> Detail des Alibis in der
+// geheimen Notiz (q2) -> was hattet ihr dabei? (q3, Gegenstände) -> letzte Chance (q4).
+// {a1} wird im Spiel durch die Antwort aus Stufe 1 ersetzt, damit die Kommissare euch zitieren.
+const CASES_VERSION = 4; // 4: neue Alibi-Fälle 9-16
 const hardcodedCases = [
     { id: 'case_1', type: 'personal', speaker: 'grimm', title: "Der Schmuggel an der Ostsee",
       desc: "Wir haben Berichte über Schmuggelware an der Küste. Sie behaupten, Sie waren dort nur für Ihren einzigen gemeinsamen Urlaub.",
@@ -691,7 +739,65 @@ const hardcodedCases = [
       q1: "Was haben Sie als Werkzeug zweckentfremdet?", q3: "Sie behaupten, Sie hätten an dem Abend nur gekocht. Welcher dieser Gegenstände lag dabei angeblich auf der Arbeitsplatte?" },
     { id: 'case_8', type: 'general', speaker: 'schatten', title: "Der falsche Deckname",
       desc: "Ein Zeuge hat gehört, wie Sie Ihren Komplizen bei der Flucht mit dem Namen eines Charakters aus Ihrer gemeinsamen Lieblingsserie gerufen haben.",
-      q1: "Welcher Name war das?", q3: "Sie behaupten, Sie hätten den ganzen Abend Serie geschaut. Welchen dieser Gegenstände hatten Sie dabei angeblich auf dem Sofa liegen?" }
+      q1: "Welcher Name war das?", q3: "Sie behaupten, Sie hätten den ganzen Abend Serie geschaut. Welchen dieser Gegenstände hatten Sie dabei angeblich auf dem Sofa liegen?" },
+
+    // ---------- Neue Alibi-Fälle: Ihr bestreitet die Tat und beweist, dass ihr woanders wart ----------
+    { id: 'case_9', type: 'general', speaker: 'grimm', title: "Der Blaue Kater aus dem Stadtmuseum",
+      desc: "Samstagnacht, 23:40 Uhr. Aus dem Stadtmuseum verschwindet der „Blaue Kater“, ein Diamant so groß wie eine Walnuss. Die Kamera zeigt zwei Gestalten, die Ihnen verdächtig ähnlich sehen.",
+      q1: "Sie streiten alles ab? Dann sagen Sie mir: Wo waren Sie beide Samstagnacht um 23:40 Uhr wirklich?",
+      q2: "Euer Alibi: Ihr wart angeblich hier: „{a1}“. Was habt ihr dort gegessen oder getrunken?",
+      clue: "Am Museumsfenster klebt ein Kaugummi. Die Speichelprobe ist schon im Labor.",
+      q3: "Sie waren also angeblich hier: „{a1}“. Wir haben Ihre Taschen geleert. Welchen dieser Gegenstände hatten Sie an dem Abend dabei?",
+      q4: "Letzte Chance: Wer hat euch dort gesehen und kann das bezeugen?" },
+    { id: 'case_10', type: 'general', speaker: 'schatten', title: "Die verschwundene Zirkus-Giraffe",
+      desc: "Gestern früh um fünf Uhr war das Gehege vom Zirkus Bellini leer. Giraffe Gisela ist weg. Ein Zeuge hat Ihr Auto mit einem sehr hohen Anhänger gesehen.",
+      q1: "Sie waren es also nicht? Wo waren Sie gestern um fünf Uhr morgens?",
+      q2: "Euer Alibi: „{a1}“, so früh am Morgen? Warum wart ihr da überhaupt schon wach?",
+      clue: "In Ihrem Kofferraum lagen frisches Heu und ein drei Meter langer Schal.",
+      q3: "Angeblich wart ihr hier: „{a1}“. Welchen dieser Gegenstände hattet ihr dort bei euch?",
+      q4: "Letzte Chance: Was habt ihr direkt danach gefrühstückt?" },
+    { id: 'case_11', type: 'general', speaker: 'grimm', title: "Der gefälschte Millionen-Lottoschein",
+      desc: "Freitagabend, 20 Uhr. Am Kiosk Sonnenschein wurde ein Lottoschein über 3,7 Millionen eingelöst. Er war gefälscht. Die Besitzerin beschreibt zwei Kunden mit auffällig guter Laune.",
+      q1: "Sie waren das nicht? Dann sagen Sie mir: Was haben Sie beide am Freitagabend stattdessen gemacht?",
+      q2: "Euer Alibi: „{a1}“. Und wer von euch beiden hat dabei gewonnen?",
+      clue: "Auf dem gefälschten Schein ist ein Kaffeefleck. In Herzform.",
+      q3: "Sie behaupten also: „{a1}“. Welchen dieser Gegenstände hatten Sie dabei in der Tasche?",
+      q4: "Letzte Chance: Wie viel Geld habt ihr an dem Abend ausgegeben?" },
+    { id: 'case_12', type: 'general', speaker: 'schatten', title: "Der Stromausfall auf dem Stadtfest",
+      desc: "Punkt 21 Uhr ging auf dem Stadtfest das Licht aus, genau als der Bürgermeister seine Rede halten wollte. Am Stromkasten fanden wir Fingerabdrücke, die Ihren sehr ähnlich sind.",
+      q1: "Sie waren gar nicht auf dem Stadtfest? Wo waren Sie dann um 21 Uhr?",
+      q2: "Euer Alibi: „{a1}“. Welche Musik lief dort gerade?",
+      clue: "Im Stromkasten steckte ein angebissener Schokoriegel. Ihre Lieblingssorte.",
+      q3: "Angeblich wart ihr hier: „{a1}“. Welchen dieser Gegenstände hattet ihr dort dabei?",
+      q4: "Letzte Chance: Wie seid ihr danach nach Hause gekommen?" },
+    { id: 'case_13', type: 'general', speaker: 'grimm', title: "Das pinke Einhorn am Rathaus",
+      desc: "Heute Nacht hat jemand ein drei Meter großes Einhorn ans Rathaus gesprüht. Die Farbe ist exakt das Pink, das in Ihrem Keller gefunden wurde.",
+      q1: "Sie leugnen? Wo haben Sie die Nacht verbracht?",
+      q2: "Euer Alibi: „{a1}“. Wer war außer euch noch dort?",
+      clue: "Unter dem Einhorn steht ein kleines, krakeliges „JJ“.",
+      q3: "Sie sagen, Sie waren hier: „{a1}“. Welchen dieser Gegenstände hatten Sie dort angeblich dabei?",
+      q4: "Letzte Chance: Um wie viel Uhr seid ihr dort angekommen?" },
+    { id: 'case_14', type: 'general', speaker: 'schatten', title: "Die gestohlene Hochzeitstorte",
+      desc: "Samstag, 15 Uhr. Auf der Hochzeit von Familie Krawczyk verschwand eine fünfstöckige Torte. Zwei Gäste, die niemand eingeladen hatte, wurden mit Sahne im Gesicht gesehen.",
+      q1: "Sie waren nicht auf der Hochzeit? Wo waren Sie Samstag um 15 Uhr?",
+      q2: "Euer Alibi: „{a1}“. Was habt ihr dort getrunken?",
+      clue: "Auf Ihrem Rücksitz klebt ein Marzipanröschen.",
+      q3: "Angeblich wart ihr hier: „{a1}“. Welchen dieser Gegenstände hattet ihr dort bei euch?",
+      q4: "Letzte Chance: Was war das Erste, was ihr danach gegessen habt?" },
+    { id: 'case_15', type: 'general', speaker: 'grimm', title: "Die Weltreise von Gartenzwerg Egon",
+      desc: "Herr Pfeffer vermisst seinen preisgekrönten Gartenzwerg „König Egon“. Seit Dienstag kommen Postkarten aus aller Welt, mit Egon darauf. Die Handschrift sieht aus wie Ihre.",
+      q1: "Sie hätten nichts damit zu tun? Wo waren Sie letzten Dienstag?",
+      q2: "Euer Alibi: „{a1}“. Womit seid ihr dorthin gekommen?",
+      clue: "Auf der letzten Postkarte sieht man im Hintergrund Ihre Lieblings-Pommesbude.",
+      q3: "Sie waren also angeblich hier: „{a1}“. Welchen dieser Gegenstände hatten Sie dort dabei?",
+      q4: "Letzte Chance: Was habt ihr von dort als Andenken mitgebracht?" },
+    { id: 'case_16', type: 'general', speaker: 'schatten', title: "Der Ausbruch aus dem Escape-Room",
+      desc: "Gestern Abend sind zwei Personen aus dem Escape-Room „Fluch des Pharao“ ausgebrochen, und zwar durch die Wand. Schaden: 4.000 Euro. Die Mitarbeiterin schwört, sie hätte Sie gesehen.",
+      q1: "Sie waren nie dort? Was haben Sie gestern Abend stattdessen gemacht?",
+      q2: "Euer Alibi: „{a1}“. Wer von euch hatte die Idee dazu?",
+      clue: "In der Wand steckt ein Turnschuh. Exakt Ihre Größe.",
+      q3: "Sie behaupten also: „{a1}“. Welchen dieser Gegenstände hatten Sie dabei?",
+      q4: "Letzte Chance: Wie lange hat das ungefähr gedauert?" }
 ];
 
 let activeCase = hardcodedCases[0];
@@ -787,8 +893,10 @@ function pickCaseForDay(caseList, dayStr) {
     return caseList[((seed ^ (seed >>> 16)) >>> 0) % caseList.length];
 }
 
-// --- LEVEL 3: Die 10 beschlagnahmten Gegenstände (Tascheninhalte für das Alibi) ---
-const ALIBI_ITEMS = [
+// --- LEVEL 3: Pool der beschlagnahmten Tascheninhalte ---
+// Keine Tatwaffen: Das sind Dinge, die ihr angeblich am Alibi-Ort dabeihattet. Pro Verhör werden 10 gezogen.
+const ITEM_POOL = [
+    // die ursprünglichen zehn
     { id: 'puempel', name: 'Pümpel', icon: '🪠' },
     { id: 'alien', name: '3D-gedrucktes Alien', icon: '👽' },
     { id: 'klobuerste', name: 'Klobürste', icon: '🧹' },
@@ -798,8 +906,44 @@ const ALIBI_ITEMS = [
     { id: 'schluessel', name: 'Abgebrochener Schlüssel', icon: '🗝️' },
     { id: 'taschenuhr', name: 'Taschenuhr', icon: '⏱️' },
     { id: 'kaktus', name: 'Kaktus', icon: '🌵' },
-    { id: 'klapphandy', name: 'Klapphandy', icon: '📱' }
+    { id: 'klapphandy', name: 'Klapphandy', icon: '📱' },
+    // kuriose Neuzugänge
+    { id: 'goldzahn', name: 'Goldener Zahn', icon: '🦷' },
+    { id: 'sonnenbrille', name: 'Spiegel-Sonnenbrille', icon: '🕶️' },
+    { id: 'wuerfel', name: 'Gezinkter Würfel', icon: '🎲' },
+    { id: 'zauberkarten', name: 'Gezinkte Zauberkarten', icon: '🃏' },
+    { id: 'kristallkugel', name: 'Kristallkugel', icon: '🔮' },
+    { id: 'papagei', name: 'Ausgestopfter Papagei', icon: '🦜' },
+    { id: 'schatzkarte', name: 'Schatzkarte', icon: '🗺️' },
+    { id: 'diamant', name: 'Gefälschter Diamant', icon: '💎' },
+    { id: 'maske', name: 'Venezianische Maske', icon: '🎭' },
+    { id: 'glueckskatze', name: 'Winkende Glückskatze', icon: '🐱' },
+    { id: 'magnet', name: 'Riesiger Hufeisenmagnet', icon: '🧲' },
+    { id: 'dinoknochen', name: 'Dinosaurierknochen', icon: '🦴' },
+    { id: 'vhs', name: 'Unbeschriftete VHS-Kassette', icon: '📼' },
+    { id: 'piratengold', name: 'Säckchen Piratengold', icon: '💰' },
+    { id: 'reagenzglas', name: 'Leuchtendes Reagenzglas', icon: '🧪' },
+    { id: 'casinochip', name: 'Casino-Chip aus Monaco', icon: '🎰' },
+    { id: 'konfetti', name: 'Konfetti-Kanone', icon: '🎉' },
+    { id: 'krake', name: 'Gummikrake', icon: '🦑' },
+    { id: 'meteorit', name: 'Meteoritensplitter', icon: '☄️' },
+    { id: 'ufo', name: 'Spielzeug-UFO', icon: '🛸' },
+    { id: 'kompass', name: 'Kompass ohne Nadel', icon: '🧭' },
+    { id: 'zylinder', name: 'Zaubererhut', icon: '🎩' },
+    { id: 'polaroid', name: 'Polaroid eines Fremden', icon: '📸' },
+    { id: 'liebesbrief', name: 'Anonymer Liebesbrief', icon: '💌' },
+    { id: 'flamingo', name: 'Plastikflamingo', icon: '🦩' },
+    { id: 'pilz', name: 'Leuchtender Pilz', icon: '🍄' },
+    { id: 'muschel', name: 'Riesenmuschel', icon: '🐚' },
+    { id: 'krone', name: 'Plastikkrone', icon: '👑' },
+    { id: 'funkgeraet', name: 'Altes Funkgerät', icon: '📻' },
+    { id: 'wunderkerzen', name: 'Bündel Wunderkerzen', icon: '🎇' },
+    { id: 'saxophon', name: 'Saxophon', icon: '🎷' },
+    { id: 'lupe', name: 'Lupe mit Sprung', icon: '🔍' },
+    { id: 'gummihuhn', name: 'Gummihuhn', icon: '🐔' },
+    { id: 'wachsticket', name: 'Ticket fürs Wachsfigurenkabinett', icon: '🎟️' }
 ];
+const ITEMS_PER_ROUND = 10;
 // Feste Plätze auf dem Tisch links und rechts der Akte (in % der Tischfläche)
 const TABLE_SPOTS = [
     [4, 14], [17, 36], [6, 58], [22, 70], [12, 84],
@@ -807,28 +951,53 @@ const TABLE_SPOTS = [
 ];
 
 function itemById(id) {
-    return ALIBI_ITEMS.find(i => i.id === id);
+    return ITEM_POOL.find(i => i.id === id);
 }
 function itemLabel(id) {
     const it = itemById(id);
     return it ? `${it.icon} ${it.name}` : (id || '-');
 }
 
-// Pro Tag gemischt, aber für beide Spieler in derselben Reihenfolge
-function itemsForDay(dayStr) {
+// {a1} in Fragen und Sätzen durch die Antwort aus Stufe 1 ersetzen, damit das Verhör auf eure Aussage aufbaut.
+// Haben beide Verschiedenes gesagt, zitieren die Kommissare beides: „Kino“ oder doch „Freibad“?
+function story(text, data) {
+    if (!text || !text.includes('{a1}')) return text;
+    const s1 = (data && data.stage1) || {};
+    let a1 = '…';
+    if (s1.Juls && s1.Joe) {
+        a1 = normalizeAnswer(s1.Juls) === normalizeAnswer(s1.Joe) ? s1.Juls : `${s1.Juls}“ oder doch „${s1.Joe}`;
+    } else if (s1[currentUserRole]) {
+        a1 = s1[currentUserRole];
+    }
+    return text.split('{a1}').join(a1);
+}
+
+// Fragetexte in Akte und Notiz mit der aktuellen Aussage füllen
+function refreshStoryTexts(data) {
+    q3Text.innerText = story(activeCase.q3, data);
+    document.getElementById('s2-question-file').innerText = story(activeCase.q2, data);
+    document.getElementById('scrap-question').innerText = story(activeCase.q2, data);
+    panicQuestion.innerText = story(activeCase.q4, data);
+}
+
+// Zufällige Auswahl aus dem Pool, für beide Spieler gleich (Seed = Tag + Runde + Fall)
+function itemsForRound(seedStr) {
     let seed = 7;
-    for (const ch of dayStr) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) >>> 0;
+    for (const ch of seedStr) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) >>> 0;
     const rnd = () => { seed = (Math.imul(seed ^ (seed >>> 15), 2246822507) + 0x6d2b79f5) >>> 0; return seed / 4294967296; };
-    const list = [...ALIBI_ITEMS];
+    const list = [...ITEM_POOL];
     for (let i = list.length - 1; i > 0; i--) {
         const j = Math.floor(rnd() * (i + 1));
         [list[i], list[j]] = [list[j], list[i]];
     }
-    return list;
+    return list.slice(0, ITEMS_PER_ROUND);
 }
 
+// Runde des Tages: wird bei "Neues Verhör" hochgezählt, damit ein neuer Fall und neue Gegenstände kommen
+let currentRound = 0;
+
 function renderAlibiItems() {
-    const items = itemsForDay(currentDayStr);
+    const items = itemsForRound(`${currentDayStr}#${currentRound}#${activeCase.id}`);
     itemGrid.innerHTML = '';
     tableItems.innerHTML = '';
     items.forEach((it, idx) => {
@@ -868,6 +1037,10 @@ async function loadDailyCase() {
             if (fromDb.length) caseList = fromDb;
         }
 
+        // Wie oft wurde heute schon neu gestartet? Davon hängen Fall und Gegenstände ab.
+        const roundSnap = await withTimeout(get(ref(db, `meta/round/${currentDayStr}`)));
+        currentRound = roundSnap.exists() ? Number(roundSnap.val()) || 0 : 0;
+
         // Hat heute schon jemand einen Fall festgelegt? Dann denselben nehmen.
         const dailySnap = await withTimeout(get(ref(db, `daily/${currentDayStr}/caseId`)));
         if (dailySnap.exists()) chosenId = dailySnap.val();
@@ -876,7 +1049,13 @@ async function loadDailyCase() {
     }
 
     caseList.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
-    activeCase = caseList.find(c => c.id === chosenId) || pickCaseForDay(caseList, currentDayStr);
+    // Fall pro Tag und Runde; nach einem Neustart nicht direkt denselben Fall wie davor
+    let picked = pickCaseForDay(caseList, `${currentDayStr}#${currentRound}`);
+    if (currentRound > 0 && caseList.length > 1) {
+        const previous = pickCaseForDay(caseList, `${currentDayStr}#${currentRound - 1}`);
+        if (previous.id === picked.id) picked = caseList[(caseList.indexOf(picked) + 1) % caseList.length];
+    }
+    activeCase = caseList.find(c => c.id === chosenId) || picked;
 
     // Fall für den Partner festhalten (fire and forget)
     if (chosenId !== activeCase.id) {
@@ -886,7 +1065,6 @@ async function loadDailyCase() {
     // Populate Modal File
     caseName.innerText = activeCase.title;
     q1Text.innerText = activeCase.q1;
-    q3Text.innerText = activeCase.q3;
     document.getElementById('case-badge').innerText = activeCase.type === 'personal'
         ? '🔒 Persönlicher Fall – nur ihr beide kennt die Antwort'
         : '🎲 Allgemeiner Fall – tippt ohne Absprache dasselbe Wort';
@@ -898,10 +1076,8 @@ async function loadDailyCase() {
 
     renderAlibiItems();
 
-    // Alibi-Frage der Notiz (Stufe 2)
-    document.getElementById('s2-question-file').innerText = activeCase.q2;
-    document.getElementById('scrap-question').innerText = activeCase.q2;
-    panicQuestion.innerText = activeCase.q4;
+    // Fragen von Stufe 2-4 (mit {a1} = Aussage aus Stufe 1, wird bei jeder Aktualisierung neu gefüllt)
+    refreshStoryTexts({});
 
     setupStage2Roles();
 }
@@ -1075,6 +1251,7 @@ function describeStage1(s1) {
             ? `Julian und Joe sagen beide „${j}“. Gleiche Antwort! Verdächtig gut. Wir müssen kurz telefonieren. Bleibt sitzen.`
             : `Julian sagt „${j}“, Joe sagt „${o}“. Das passt nicht zusammen, Runde eins verpatzt! Wir müssen kurz telefonieren. Bleibt sitzen.`;
     }
+    said = said.replace('Wir müssen kurz telefonieren.', `${suspicionRemark(1, stage1Outcome)}Wir müssen kurz telefonieren.`);
     sayOnce('s1react', said, 7000, activeCase.speaker);
     if (!autoShown.s1result) {
         autoShown.s1result = true;
@@ -1086,6 +1263,7 @@ function describeStage1(s1) {
 let stage1Outcome = false;
 
 function updateUIBasedOnState(data) {
+    refreshStoryTexts(data);
     updateProgress(data);
     guideToStage(data);
     const setterRoleNow = isEvenDay ? 'Juls' : 'Joe';
@@ -1178,9 +1356,10 @@ function updateUIBasedOnState(data) {
                 const resultLine = alibiHolds
                     ? `So, da sind wir wieder. ${setterName} hatte „${data.stage2.word}“ aufgeschrieben, und ${guesserName} hat „${data.stage2.guess}“ geraten. Volltreffer! Euer Alibi deckt sich. Verdächtig gut.`
                     : `So, da sind wir wieder. ${setterName} hatte „${data.stage2.word}“ aufgeschrieben, aber ${guesserName} hat „${data.stage2.guess}“ geraten. Daneben! Euer Alibi hat Lücken.`;
-                const resultDelay = (resultLine.length + 2) * (resultLine.length + 2 > 120 ? 22 : 40) + 3500;
-                sayOnce('s2result', resultLine, 3500, activeCase.speaker);
-                sayOnce('s3intro', `Wir haben etwas gefunden: ${activeCase.clue} Sie bestreiten die Tat? Dann beweisen Sie Ihr Alibi. Wir haben Ihre Taschen geleert, alles liegt auf dem Tisch. ${activeCase.q3}`, 12000, activeCase.speaker, resultDelay);
+                const fullResult = `${resultLine} ${suspicionRemark(2, !!alibiHolds)}`.trim();
+                const resultDelay = (fullResult.length + 2) * (fullResult.length + 2 > 120 ? 22 : 40) + 3500;
+                sayOnce('s2result', fullResult, 3500, activeCase.speaker);
+                sayOnce('s3intro', `Wir haben etwas gefunden: ${activeCase.clue} Sie bestreiten die Tat? Dann beweisen Sie Ihr Alibi. Wir haben Ihre Taschen geleert, alles liegt auf dem Tisch. ${story(activeCase.q3, data)}`, 12000, activeCase.speaker, resultDelay);
                 if (!spoken.s2stamp) {
                     spoken.s2stamp = true;
                     playSound(alibiHolds ? 'win' : 'lose');
@@ -1370,7 +1549,7 @@ function runPanic(data) {
         shakeScreen();
         showVerdictStamp('GEPLATZT!', 'lose');
         const itemJ = itemById(data.stage3.Juls), itemO = itemById(data.stage3.Joe);
-        speak(`Julian sagt „${itemJ ? itemJ.name : data.stage3.Juls}“, Joe sagt „${itemO ? itemO.name : data.stage3.Joe}“. Das passt nicht zusammen! Eure Aussage ist geplatzt, ROTER ALARM! Ihr habt eine Minute, beantwortet beide: ${activeCase.q4}`, 9000, 'grimm');
+        speak(`Julian sagt „${itemJ ? itemJ.name : data.stage3.Juls}“, Joe sagt „${itemO ? itemO.name : data.stage3.Joe}“. Das passt nicht zusammen! ${suspicionRemark(3, false)}Eure Aussage ist geplatzt, ROTER ALARM! Ihr habt eine Minute, beantwortet beide: ${story(activeCase.q4, data)}`, 9000, 'grimm');
     }
 
     // Eigene und Partnerwörter anzeigen. Das Wort des Partners bleibt verdeckt, bis man selbst eins abgeschickt hat.
@@ -1509,8 +1688,13 @@ btnPanicSend.addEventListener('click', () => {
 });
 
 async function restartToday() {
-    // Nur den heutigen Spieltag löschen; Fälle und Streak bleiben erhalten.
-    // Im Server-Modus gilt das für alle Geräte, die anderen laden sich dann von selbst neu.
+    // Heutigen Spieltag löschen und die Runde hochzählen: So kommen ein neuer Fall und neue Gegenstände.
+    // Fälle und Streak bleiben erhalten. Das Gerät des Partners lädt sich danach von selbst neu.
+    try {
+        const snap = await withTimeout(get(ref(db, `meta/round/${currentDayStr}`)));
+        const next = (snap.exists() ? Number(snap.val()) || 0 : 0) + 1;
+        await withTimeout(update(ref(db, 'meta/round'), { [currentDayStr]: next }));
+    } catch (e) {}
     try { await set(ref(db, `daily/${currentDayStr}`), null); } catch (e) {}
     location.reload();
 }
